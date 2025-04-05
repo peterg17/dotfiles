@@ -1,0 +1,10 @@
+- defaults:
+    link:
+      relink: true
+
+- link:
+    ~/.zshrc: .zshrc
+    ~/.doom.d: .doom.d
+    ~/.fzf.bash: .fzf.bash
+    ~/.fzf.zsh: .fzf.zsh
+    ~/.zshrc: .zshrc
