@@ -22,5 +22,7 @@
       description: Symlink .gitconfig on fresh install, inject include if file already exists
     - command: "git config --local user.email 'petergriggs17@gmail.com' && git config --local user.name 'Peter Griggs'"
       description: Pin personal email for the dotfiles repo (overrides any global/local config)
+    - command: "git config --global core.editor \"nvr -cc split --remote-wait +'set bufhidden=delete'\""
+      description: Set nvr as global git editor
     - command: "touch ~/.tmux.conf && grep -qF 'source-file ~/.tmux.conf.local' ~/.tmux.conf || printf '\\nsource-file ~/.tmux.conf.local\\n' >> ~/.tmux.conf"
       description: Inject tmux.conf.local source (skipped if already present)
