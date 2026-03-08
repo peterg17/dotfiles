@@ -20,3 +20,5 @@
 - shell:
     - command: "[ -L ~/.gitconfig ] || grep -qF 'path = ~/dotfiles/.gitconfig' ~/.gitconfig || printf '\\n[include]\\n\\tpath = ~/dotfiles/.gitconfig\\n' >> ~/.gitconfig"
       description: Inject dotfiles gitconfig include (skipped if already a symlink)
+    - command: "git config --local user.email 'petergriggs17@gmail.com' && git config --local user.name 'Peter Griggs'"
+      description: Pin personal email for the dotfiles repo (overrides any global/local config)
