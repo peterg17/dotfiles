@@ -34,6 +34,41 @@ Without `nvr`, git commit/rebase editor invocations will fail. If you're on a ma
 git config --global core.editor vim
 ```
 
+## remote Linux dev box prerequisites
+
+Install these before running `./install` — Mason will auto-install LSP servers on first launch of nvim, but they depend on these being present.
+
+**Node.js** (required for pyright, jsonls):
+```sh
+curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh | bash
+# restart shell, then:
+nvm install --lts
+```
+
+**Python** (required for pyright):
+```sh
+sudo apt install python3 python3-pip
+```
+
+**Go** (required for gopls):
+```sh
+GO_VERSION=$(curl -sL 'https://go.dev/dl/?mode=json' | python3 -c "import sys,json; print(json.load(sys.stdin)[0]['version'])")
+curl -LO "https://go.dev/dl/$GO_VERSION.linux-amd64.tar.gz"
+sudo rm -rf /usr/local/go
+sudo tar -C /usr/local -xzf "$GO_VERSION.linux-amd64.tar.gz"
+echo 'export PATH=$PATH:/usr/local/go/bin' >> ~/.zshrc
+source ~/.zshrc
+```
+
+**Java** (required for jdtls) — use [SDKMAN](https://sdkman.io) to get the latest OpenJDK:
+```sh
+curl -s "https://get.sdkman.io" | bash
+# restart shell, then:
+sdk install java
+```
+
+---
+
 ## remote Linux dev box setup
 
 To forward `ANTHROPIC_API_KEY` from your Mac over SSH (so nvim/avante works remotely without storing the key on the remote):
