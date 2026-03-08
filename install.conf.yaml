@@ -11,6 +11,12 @@
     ~/.fzf.bash: .fzf.bash
     ~/.fzf.zsh: .fzf.zsh
     ~/.config/nvim: nvim
-    ~/.gitconfig: .gitconfig
     ~/.ssh/config.d/00-generic: ssh/00-generic
     ~/.claude/settings.json: claude/settings.json
+    ~/.gitconfig:
+      path: .gitconfig
+      force: false
+
+- shell:
+    - command: "[ -L ~/.gitconfig ] || grep -qF 'path = ~/dotfiles/.gitconfig' ~/.gitconfig || printf '\\n[include]\\n\\tpath = ~/dotfiles/.gitconfig\\n' >> ~/.gitconfig"
+      description: Inject dotfiles gitconfig include (skipped if already a symlink)

@@ -5,6 +5,26 @@ Keep track of my commonly used dotfiles using the https://github.com/anishathaly
 1. `git clone https://github.com/peterg17/dotfiles.git`
 2. `./install`
 
+### Prerequisites
+
+**Git editor (`nvr`):** The gitconfig uses [neovim-remote](https://github.com/mhinz/neovim-remote) as the git editor, which works on both macOS and Linux. Install it after neovim:
+
+```sh
+# macOS
+brew install neovim
+pip install neovim-remote
+
+# Linux
+sudo apt install neovim   # or equivalent
+pip install neovim-remote
+```
+
+Without `nvr`, git commit/rebase editor invocations will fail. If you're on a machine where you don't want to install it, set a local override:
+
+```sh
+git config --global core.editor vim
+```
+
 ## remote Linux dev box setup
 
 To forward `ANTHROPIC_API_KEY` from your Mac over SSH (so nvim/avante works remotely without storing the key on the remote):
