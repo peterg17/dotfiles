@@ -16,6 +16,7 @@
     ~/.gitconfig:
       path: .gitconfig
       force: false
+    ~/.tmux.conf: .tmux.conf
 
 - shell:
     - command: "[ -L ~/.gitconfig ] || grep -qF 'path = ~/dotfiles/.gitconfig' ~/.gitconfig || printf '\\n[include]\\n\\tpath = ~/dotfiles/.gitconfig\\n' >> ~/.gitconfig"
