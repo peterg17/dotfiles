@@ -36,6 +36,13 @@ git config --global core.editor vim
 
 ## remote Linux dev box prerequisites
 
+**Claude Code:**
+```sh
+curl -fsSL https://claude.ai/install.sh | bash
+```
+
+
+
 Install these before running `./install` — Mason will auto-install LSP servers on first launch of nvim, but they depend on these being present.
 
 **Node.js** (required for pyright, jsonls):
