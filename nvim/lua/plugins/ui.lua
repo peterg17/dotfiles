@@ -66,6 +66,13 @@ return {
       filters = { dotfiles = false },
       git = { enable = true },
       filesystem_watchers = { enable = false },
+      on_attach = function(bufnr)
+        local api = require("nvim-tree.api")
+        -- load all defaults first
+        api.config.mappings.default_on_attach(bufnr)
+        -- then override t to open in new tab and switch to it
+        vim.keymap.set("n", "t", api.node.open.tab, { buffer = bufnr, noremap = true, silent = true, nowait = true, desc = "Open in new tab" })
+      end,
     },
   },
 
