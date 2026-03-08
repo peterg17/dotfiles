@@ -6,7 +6,9 @@
     - ~/.ssh/config.d
 
 - link:
-    ~/.zshrc: .zshrc
+    ~/.zshrc:
+      path: .zshrc
+      force: true
     ~/.doom.d: .doom.d
     ~/.fzf.bash: .fzf.bash
     ~/.fzf.zsh: .fzf.zsh
