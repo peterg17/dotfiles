@@ -1,0 +1,75 @@
+return {
+  {
+    "yetone/avante.nvim",
+    event = "VeryLazy",
+    version = false,  -- rolling release; use latest commit
+    build = "make",   -- requires Rust/cargo for native components
+    dependencies = {
+      "nvim-treesitter/nvim-treesitter",
+      "nvim-lua/plenary.nvim",
+      "MunifTanjim/nui.nvim",
+      { "folke/snacks.nvim", opts = {} },
+      -- Markdown rendering in avante panels
+      {
+        "MeanderingProgrammer/render-markdown.nvim",
+        opts = { file_types = { "markdown", "Avante" } },
+        ft = { "markdown", "Avante" },
+      },
+    },
+    opts = {
+      provider = "claude",
+      auto_suggestions_provider = "claude",
+      providers = {
+        claude = {
+          endpoint = "https://api.anthropic.com",
+          -- avante pattern-matches on "claude-sonnet-4-5" to use the correct
+          -- text_editor_20250728 tool; "claude-sonnet-4-6" falls through to
+          -- the old text_editor_20250429 which the API no longer accepts.
+          -- Update this once avante adds a 4-6 pattern.
+          model = "claude-sonnet-4-5",
+          extra_request_body = {
+            temperature = 0,
+            max_tokens = 32768,
+          },
+        },
+      },
+      input = { provider = "snacks" },
+      behaviour = {
+        auto_suggestions = false,
+        auto_set_keymaps = true,
+        auto_apply_diff_after_generation = false,
+        support_paste_from_clipboard = false,  -- requires img-clip.nvim if enabled
+      },
+      mappings = {
+        ask = "<leader>aa",
+        edit = "<leader>ae",
+        refresh = "<leader>ar",
+        toggle = {
+          default = "<leader>at",
+          debug = "<leader>ad",
+          hint = "<leader>ah",
+          suggestion = "<leader>as",
+          repomap = "<leader>aR",
+        },
+        diff = {
+          ours = "co",
+          theirs = "ct",
+          all_theirs = "ca",
+          both = "cb",
+          cursor = "cc",
+          next = "]x",
+          prev = "[x",
+        },
+        files = {
+          add_current = "<leader>ac",
+        },
+      },
+      windows = {
+        position = "right",
+        wrap = true,
+        width = 40,
+        sidebar_header = { rounded = true },
+      },
+    },
+  },
+}

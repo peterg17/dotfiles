@@ -1,0 +1,15 @@
+{
+  "hooks": {
+    "Notification": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "printf '\\033]9;Claude requires your input\\007'"
+          }
+        ]
+      }
+    ]
+  }
+}

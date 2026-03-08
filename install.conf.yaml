@@ -2,9 +2,15 @@
     link:
       relink: true
 
+- create:
+    - ~/.ssh/config.d
+
 - link:
     ~/.zshrc: .zshrc
     ~/.doom.d: .doom.d
     ~/.fzf.bash: .fzf.bash
     ~/.fzf.zsh: .fzf.zsh
-    ~/.zshrc: .zshrc
+    ~/.config/nvim: nvim
+    ~/.gitconfig: .gitconfig
+    ~/.ssh/config.d/00-generic: ssh/00-generic
+    ~/.claude/settings.json: claude/settings.json

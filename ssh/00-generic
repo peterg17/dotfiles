@@ -1,0 +1,10 @@
+# Generic SSH settings — tracked in ~/dotfiles
+# DD-specific hosts go in ~/.ssh/config.d/ (untracked, never commit)
+
+Host *
+  AddKeysToAgent yes
+  UseKeychain yes                # macOS keychain integration (no-op on Linux)
+  IdentityFile ~/.ssh/id_ed25519
+  ServerAliveInterval 30
+  SendEnv ANTHROPIC_API_KEY      # forward to remote for nvim/avante (requires AcceptEnv on sshd)
+  ForwardAgent yes               # forward SSH agent so remote can auth back to Mac for notifications
