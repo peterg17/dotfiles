@@ -65,6 +65,7 @@ source ~/.zshrc
 curl -s "https://get.sdkman.io" | bash
 # restart shell, then:
 sdk install java
+sdk install maven
 ```
 
 ---
