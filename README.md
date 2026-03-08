@@ -7,15 +7,24 @@ Keep track of my commonly used dotfiles using the https://github.com/anishathaly
 
 ### Prerequisites
 
-**Git editor (`nvr`):** The gitconfig uses [neovim-remote](https://github.com/mhinz/neovim-remote) as the git editor, which works on both macOS and Linux. Install it after neovim:
+**Neovim (≥ 0.9 required):** The nvim config uses lazy.nvim and `vim.keymap`, which require a recent Neovim. The system package on Debian/Ubuntu is typically too old — install from snap or GitHub releases instead:
 
 ```sh
 # macOS
 brew install neovim
-pip install neovim-remote
 
-# Linux
-sudo apt install neovim   # or equivalent
+# Linux (snap — easiest)
+sudo snap install nvim --classic
+
+# Linux (GitHub release — if snap unavailable)
+curl -LO https://github.com/neovim/neovim/releases/latest/download/nvim-linux-x86_64.tar.gz
+sudo tar -C /opt -xzf nvim-linux-x86_64.tar.gz
+sudo ln -sf /opt/nvim-linux-x86_64/bin/nvim /usr/local/bin/nvim
+```
+
+**Git editor (`nvr`):** The gitconfig uses [neovim-remote](https://github.com/mhinz/neovim-remote) as the git editor. Install it after neovim:
+
+```sh
 pip install neovim-remote
 ```
 
