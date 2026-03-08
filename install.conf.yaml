@@ -14,14 +14,12 @@
     ~/.fzf.zsh: .fzf.zsh
     ~/.config/nvim: nvim
     ~/.ssh/config.d/00-generic: ssh/00-generic
-    ~/.gitconfig:
-      path: .gitconfig
-      force: false
+
     ~/.tmux.conf.local: .tmux.conf.local
 
 - shell:
-    - command: "[ -L ~/.gitconfig ] || grep -qF 'path = ~/dotfiles/.gitconfig' ~/.gitconfig || printf '\\n[include]\\n\\tpath = ~/dotfiles/.gitconfig\\n' >> ~/.gitconfig"
-      description: Inject dotfiles gitconfig include (skipped if already a symlink)
+    - command: "[ -e ~/.gitconfig ] && { [ -L ~/.gitconfig ] || grep -qF 'path = ~/dotfiles/.gitconfig' ~/.gitconfig || printf '\\n[include]\\n\\tpath = ~/dotfiles/.gitconfig\\n' >> ~/.gitconfig; } || ln -sf ~/dotfiles/.gitconfig ~/.gitconfig"
+      description: Symlink .gitconfig on fresh install, inject include if file already exists
     - command: "git config --local user.email 'petergriggs17@gmail.com' && git config --local user.name 'Peter Griggs'"
       description: Pin personal email for the dotfiles repo (overrides any global/local config)
     - command: "touch ~/.tmux.conf && grep -qF 'source-file ~/.tmux.conf.local' ~/.tmux.conf || printf '\\nsource-file ~/.tmux.conf.local\\n' >> ~/.tmux.conf"
