@@ -1,22 +1,31 @@
 # zshrc config file
 # BEGIN ANSIBLE MANAGED BLOCK
-# Load homebrew shell variables
-eval "$(/opt/homebrew/bin/brew shellenv)"
 
-# Force certain more-secure behaviours from homebrew
-export HOMEBREW_NO_INSECURE_REDIRECT=1
-export HOMEBREW_CASK_OPTS=--require-sha
-export HOMEBREW_DIR=/opt/homebrew
-export HOMEBREW_BIN=/opt/homebrew/bin
+if [[ "$(uname)" == "Darwin" ]]; then
+  # Load homebrew shell variables
+  eval "$(/opt/homebrew/bin/brew shellenv)"
+
+  # Force certain more-secure behaviours from homebrew
+  export HOMEBREW_NO_INSECURE_REDIRECT=1
+  export HOMEBREW_CASK_OPTS=--require-sha
+  export HOMEBREW_DIR=/opt/homebrew
+  export HOMEBREW_BIN=/opt/homebrew/bin
+
+  # Load ruby shims
+  eval "$(rbenv init -)"
+
+  # Prefer GNU binaries to Macintosh binaries.
+  export PATH="/opt/homebrew/opt/coreutils/libexec/gnubin:$PATH"
+
+  # for binutils
+  export PATH="/usr/local/opt/binutils/bin:$PATH"
+  export LDFLAGS="-L/usr/local/opt/binutils/lib"
+fi
 
 # Load python shims
-eval "$(pyenv init -)"
-
-# Load ruby shims
-eval "$(rbenv init -)"
-
-# Prefer GNU binaries to Macintosh binaries.
-export PATH="/opt/homebrew/opt/coreutils/libexec/gnubin:$PATH"
+if command -v pyenv 1>/dev/null 2>&1; then
+  eval "$(pyenv init -)"
+fi
 
 # Point GOPATH to our go sources
 export GOPATH="$HOME/go"
@@ -30,23 +39,15 @@ export PATH="$GOPATH/bin:$PATH"
 export GO111MODULE=auto
 # Configure Go to pull go.ddbuild.io packages.
 
-
-
-if command -v pyenv 1>/dev/null 2>&1; then
-  eval "$(pyenv init -)"
-fi
-
 export PATH="/usr/local/bin:${PATH}"
-
-# for binutils
-export PATH="/usr/local/opt/binutils/bin:$PATH"
-export LDFLAGS="-L/usr/local/opt/binutils/lib"
 
 alias k="kubectl"
 alias g="git"
 export EDITOR="emacs"
 
-alias idea="open -na 'IntelliJ IDEA' --args '@0'"
+if [[ "$(uname)" == "Darwin" ]]; then
+  alias idea="open -na 'IntelliJ IDEA' --args '@0'"
+fi
 
 # JSON
 # ---------------
@@ -78,16 +79,15 @@ g-push-set-upstream-origin() {
   git push --set-upstream origin $branch_name
 }
 
-# mac-specific stuff
-# ----------------
-#
-preview() {
-  # "$@" gives list of all arguments
-  for file in "$@"
-  do
-    qlmanage -p "$file" &
-  done
-}
+if [[ "$(uname)" == "Darwin" ]]; then
+  # mac-specific stuff
+  preview() {
+    for file in "$@"
+    do
+      qlmanage -p "$file" &
+    done
+  }
+fi
 
 # Add RVM to PATH for scripting. Make sure this is the last PATH variable change.
 export PATH="$PATH:$HOME/.rvm/bin"
@@ -96,17 +96,21 @@ export PATH="$PATH:/usr/local/bin"
 # add DOOM to path
 export PATH="$PATH:$HOME/.emacs.d/bin"
 
-#eval "$(nodenv init -)"
+if command -v fzf 1>/dev/null 2>&1; then
+  source <(fzf --zsh)
+fi
 
-source <(fzf --zsh)
-eval "$(rbenv init - zsh)"
+if command -v rbenv 1>/dev/null 2>&1; then
+  eval "$(rbenv init - zsh)"
+fi
 
-echo 'export PATH="/Applications/Sublime Text.app/Contents/SharedSupport/bin:$PATH"' >> ~/.zprofile
+if [[ "$(uname)" == "Darwin" ]]; then
+  echo 'export PATH="/Applications/Sublime Text.app/Contents/SharedSupport/bin:$PATH"' >> ~/.zprofile
+  export ANTHROPIC_API_KEY=$(security find-generic-password -a "$USER" -s "ANTHROPIC_API_KEY" -w)
+fi
 
 # Created by `pipx` on 2025-09-15 08:19:39
-export PATH="$PATH:/Users/peter.griggs/.local/bin"
-
-export ANTHROPIC_API_KEY=$(security find-generic-password -a "$USER" -s "ANTHROPIC_API_KEY" -w)
+export PATH="$PATH:$HOME/.local/bin"
 
 # Load local/private overrides (not in public dotfiles)
 [[ -f ~/.zshrc.local ]] && source ~/.zshrc.local
