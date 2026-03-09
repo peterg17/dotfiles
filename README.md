@@ -98,8 +98,8 @@ jupyter kernelspec list
 # macOS
 brew install fzf
 
-# Linux
-sudo apt install fzf
+# Linux — install from git, not apt (apt version is too old for --zsh support)
+git clone --depth 1 https://github.com/junegunn/fzf.git ~/.fzf && ~/.fzf/install
 ```
 
 **Go** (required for gopls):
