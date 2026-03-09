@@ -7,6 +7,7 @@ vim.o.ignorecase = true
 vim.o.smartcase = true
 
 -- UI
+vim.o.termguicolors = true  -- 24-bit color
 vim.o.cursorline = true
 vim.o.scrolloff = 10
 vim.o.list = true          -- show tab and trailing spaces

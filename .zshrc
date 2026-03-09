@@ -1,4 +1,7 @@
 # zshrc config file
+export PATH="~/.local/bin:$PATH"
+
+
 # BEGIN ANSIBLE MANAGED BLOCK
 
 if [[ "$(uname)" == "Darwin" ]]; then
@@ -112,5 +115,20 @@ fi
 # Created by `pipx` on 2025-09-15 08:19:39
 export PATH="$PATH:$HOME/.local/bin"
 
+# Linux-specific settings
+if [[ "$(uname)" != "Darwin" ]]; then
+  PROMPT='%F{green}%n@%m%f:%F{cyan}%~%f%# '
+  export COLORTERM=truecolor
+fi
+
 # Load local/private overrides (not in public dotfiles)
 [[ -f ~/.zshrc.local ]] && source ~/.zshrc.local
+
+export NVM_DIR="$HOME/.nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
+[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
+export PATH=$PATH:/usr/local/go/bin
+
+#THIS MUST BE AT THE END OF THE FILE FOR SDKMAN TO WORK!!!
+export SDKMAN_DIR="$HOME/.sdkman"
+[[ -s "$HOME/.sdkman/bin/sdkman-init.sh" ]] && source "$HOME/.sdkman/bin/sdkman-init.sh"
