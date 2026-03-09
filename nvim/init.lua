@@ -34,6 +34,7 @@ require("lazy").setup({
     { import = "plugins.debug" },
     { import = "plugins.testing" },
     { import = "plugins.ai" },
+    { import = "plugins.notebooks" },
   },
   checker = { enabled = false },
   ui = { border = "rounded" },

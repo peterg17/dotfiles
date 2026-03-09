@@ -56,3 +56,11 @@ end, { desc = 'Git blame current line' })
 
 -- Disable nohlsearch via packadd
 vim.cmd('packadd! nohlsearch')
+
+-- Make active tab clearly visible (applied after all plugins load, and on colorscheme change)
+vim.api.nvim_create_autocmd({ 'VimEnter', 'ColorScheme' }, {
+  pattern = '*',
+  callback = function()
+    vim.api.nvim_set_hl(0, 'TabLineSel', { bold = true, reverse = true })
+  end,
+})

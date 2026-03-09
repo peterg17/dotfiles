@@ -57,6 +57,51 @@ nvm install --lts
 sudo apt install python3 python3-pip
 ```
 
+**Python Jupyter deps** (required for molten-nvim notebook support):
+```sh
+sudo apt install pipx
+pipx install jupytext
+pip install --user pynvim jupyter_client
+mkdir -p ~/.local/share/jupyter/runtime
+```
+
+Then on first launch of nvim, run `:UpdateRemotePlugins` and restart. Start a kernel with `:MoltenInit python3`.
+
+Key mappings (all prefixed `<leader>m`):
+- `<leader>mi` — init kernel
+- `<leader>ml` — run current line
+- `<leader>mr` — re-run cell
+- `<leader>mv` (visual) — run selection
+- `<leader>mo` — show output
+- `]m` / `[m` — next/prev cell
+
+Cells are delimited by `# %%` markers in `.py` files.
+
+**Using a virtualenv kernel with Molten:**
+
+Register the venv as a named Jupyter kernel (do this once per venv):
+```sh
+source /path/to/venv/bin/activate
+pip install ipykernel
+python -m ipykernel install --user --name=myenv --display-name "My Env"
+```
+
+Then in Neovim: `:MoltenInit myenv`
+
+List all registered kernels with:
+```sh
+jupyter kernelspec list
+```
+
+**fzf** (used for branch checkout and shell history search):
+```sh
+# macOS
+brew install fzf
+
+# Linux
+sudo apt install fzf
+```
+
 **Go** (required for gopls):
 ```sh
 GO_VERSION=$(curl -sL 'https://go.dev/dl/?mode=json' | python3 -c "import sys,json; print(json.load(sys.stdin)[0]['version'])")
