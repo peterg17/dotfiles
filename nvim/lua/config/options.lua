@@ -15,7 +15,18 @@ vim.o.signcolumn = "yes"   -- always show sign column to avoid layout shifts
 vim.o.splitright = true
 vim.o.splitbelow = true
 
--- Clipboard (OSC 52 for mosh/SSH sessions)
+-- Clipboard: use OSC 52 so yanks reach local clipboard in mosh/SSH/tmux sessions
+vim.g.clipboard = {
+  name = "OSC 52",
+  copy = {
+    ["+"] = require("vim.ui.clipboard.osc52").copy("+"),
+    ["*"] = require("vim.ui.clipboard.osc52").copy("*"),
+  },
+  paste = {
+    ["+"] = require("vim.ui.clipboard.osc52").paste("+"),
+    ["*"] = require("vim.ui.clipboard.osc52").paste("*"),
+  },
+}
 vim.o.clipboard = "unnamedplus"
 
 -- Behavior
