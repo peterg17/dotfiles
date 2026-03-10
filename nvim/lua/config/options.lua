@@ -15,6 +15,9 @@ vim.o.signcolumn = "yes"   -- always show sign column to avoid layout shifts
 vim.o.splitright = true
 vim.o.splitbelow = true
 
+-- Clipboard (OSC 52 for mosh/SSH sessions)
+vim.o.clipboard = "unnamedplus"
+
 -- Behavior
 vim.o.confirm = true       -- dialog on unsaved changes instead of error
 vim.o.undofile = true      -- persistent undo across sessions
