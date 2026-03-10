@@ -17,8 +17,20 @@ return {
       },
     },
     opts = {
-      provider = "claude",
+      provider = "claude-code",
       auto_suggestions_provider = "claude",
+      acp_providers = {
+        ["claude-code"] = {
+          command = "npx",
+          args = { "-y", "@zed-industries/claude-code-acp" },
+          env = {
+            NODE_NO_WARNINGS = "1",
+            ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY"),
+            ACP_PATH_TO_CLAUDE_CODE_EXECUTABLE = vim.fn.exepath("claude"),
+            ACP_PERMISSION_MODE = "bypassPermissions",
+          },
+        },
+      },
       providers = {
         claude = {
           endpoint = "https://api.anthropic.com",
