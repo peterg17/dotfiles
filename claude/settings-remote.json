@@ -6,7 +6,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "printf '\\033]9;Claude requires your input\\007'"
+            "command": "if [ -n \"$TMUX\" ]; then printf '\\033Ptmux;\\033\\033]9;Claude requires your input\\007\\033\\\\' > /dev/tty; else printf '\\033]9;Claude requires your input\\007' > /dev/tty; fi"
           }
         ]
       }
