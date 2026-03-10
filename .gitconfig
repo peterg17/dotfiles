@@ -6,7 +6,7 @@
   name = Peter Griggs
   email = petergriggs17@gmail.com
 [core]
-  editor = nvr -cc split --remote-wait +'set bufhidden=delete'
+	editor = nvr -cc split --remote-wait +'set bufhidden=delete'
 
 [include]
   path = ~/.gitconfig.local
