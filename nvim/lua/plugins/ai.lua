@@ -1,36 +1,5 @@
 return {
   {
-    "coder/claudecode.nvim",
-    dependencies = { "folke/snacks.nvim" },
-    opts = {
-      terminal = {
-        snacks_win_opts = {
-          keys = {
-            -- Single <Esc> exits terminal mode; use <C-c> to interrupt Claude
-            term_normal = {
-              "<esc>",
-              function(_self)
-                vim.cmd("stopinsert")
-              end,
-              mode = "t",
-              expr = false,
-              desc = "Exit terminal mode",
-            },
-          },
-        },
-      },
-    },
-    keys = {
-      { "<leader>cc", "<cmd>ClaudeCode<cr>",            desc = "Toggle Claude Code" },
-      { "<leader>cf", "<cmd>ClaudeCodeFocus<cr>",       desc = "Focus Claude Code" },
-      { "<leader>cr", "<cmd>ClaudeCode --resume<cr>",   desc = "Resume Claude Code" },
-      { "<leader>cC", "<cmd>ClaudeCode --continue<cr>", desc = "Continue Claude Code" },
-      { "<leader>cm", "<cmd>ClaudeCodeSelectModel<cr>", desc = "Select Claude model" },
-      { "<leader>cb", "<cmd>ClaudeCodeAdd %<cr>",       desc = "Add buffer to Claude" },
-      { "<leader>cs", "<cmd>ClaudeCodeSend<cr>",        mode = "v", desc = "Send selection to Claude" },
-    },
-  },
-  {
     "yetone/avante.nvim",
     event = "VeryLazy",
     version = false,  -- rolling release; use latest commit
