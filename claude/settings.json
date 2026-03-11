@@ -1,3 +1,17 @@
 {
-  "model": "sonnet[1m]"
+  "permissions": {
+    "allow": [
+      "Read",
+      "Glob",
+      "Grep",
+      "WebFetch",
+      "WebSearch",
+      "Bash(gh search*)"
+    ]
+  },
+  "model": "sonnet[1m]",
+  "effortLevel": "high",
+  "enabledPlugins": {
+    "jdtls-lsp@claude-plugins-official": true
+  }
 }
