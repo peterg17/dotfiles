@@ -9,7 +9,6 @@
       "Bash(gh search*)"
     ]
   },
-  "model": "sonnet[1m]",
   "effortLevel": "high",
   "enabledPlugins": {
     "jdtls-lsp@claude-plugins-official": true
