@@ -6,3 +6,9 @@ set -as terminal-overrides ',*:Ms=\E]52;c%p1%.0s;%p2%s\007'
 # Allow OSC sequences (e.g. OSC 9 notifications) to pass through to the outer terminal
 # Requires tmux 3.3+
 set -g allow-passthrough on
+
+# Vim-style pane resizing (repeatable)
+bind -r H resize-pane -L 5
+bind -r J resize-pane -D 5
+bind -r K resize-pane -U 5
+bind -r L resize-pane -R 5
