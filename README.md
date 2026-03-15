@@ -93,6 +93,11 @@ List all registered kernels with:
 jupyter kernelspec list
 ```
 
+**ripgrep** (required for Telescope live_grep):
+```sh
+brew install ripgrep
+```
+
 **fzf** (used for branch checkout and shell history search):
 ```sh
 # macOS
