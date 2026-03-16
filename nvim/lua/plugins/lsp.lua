@@ -25,7 +25,7 @@ return {
     "williamboman/mason-lspconfig.nvim",
     dependencies = { "williamboman/mason.nvim" },
     opts = {
-      ensure_installed = { "gopls", "pyright", "jsonls" },
+      ensure_installed = { "gopls", "pyright", "jsonls", "ts_ls" },
       automatic_installation = true,
     },
   },
@@ -103,6 +103,35 @@ return {
             schemas = require("schemastore").json.schemas(),
           },
         },
+      })
+
+      -- TypeScript: use vim.lsp.start() directly in a FileType autocmd so we
+      -- can detect Yarn PnP SDK per-project at buffer-open time.
+      vim.api.nvim_create_autocmd('FileType', {
+        pattern = { 'typescript', 'typescriptreact', 'javascript', 'javascriptreact' },
+        callback = function(ev)
+          local root = vim.fs.root(ev.buf, { 'tsconfig.json', 'package.json', '.git' })
+          if not root then return end
+
+          local cmd
+          local init_opts = { hostInfo = "neovim" }
+          local yarn_server = root .. "/.yarn/sdks/typescript-language-server/lib/cli.mjs"
+          local yarn_tsserver = root .. "/.yarn/sdks/typescript/bin/tsserver"
+
+          if vim.fn.filereadable(yarn_server) == 1 then
+            cmd = { "node", yarn_server, "--stdio" }
+            init_opts.tsserver = { path = yarn_tsserver }
+          else
+            cmd = { "typescript-language-server", "--stdio" }
+          end
+
+          vim.lsp.start({
+            name = "ts_ls",
+            cmd = cmd,
+            root_dir = root,
+            init_options = init_opts,
+          }, { bufnr = ev.buf })
+        end,
       })
 
       -- Enable servers — they auto-start when relevant files are opened
