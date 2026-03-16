@@ -57,13 +57,14 @@ return {
     "nvim-tree/nvim-tree.lua",
     dependencies = { "nvim-tree/nvim-web-devicons" },
     keys = {
-      { "<leader>e", "<cmd>NvimTreeToggle<cr>", desc = "Toggle file tree" },
+      { "<leader>e", "<cmd>NvimTreeFindFileToggle<cr>", desc = "Toggle file tree" },
     },
     opts = {
       sort = { sorter = "case_sensitive" },
       view = { width = 35 },
       renderer = { group_empty = true },
       filters = { dotfiles = false },
+      update_focused_file = { enable = true },
       git = { enable = true },
       filesystem_watchers = { enable = false },
       on_attach = function(bufnr)

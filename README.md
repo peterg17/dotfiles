@@ -125,6 +125,31 @@ sdk install java
 sdk install maven
 ```
 
+## LSP key mappings
+
+These apply in any buffer where an LSP server is active (Go, Python, TypeScript, Java, etc.).
+
+**Custom mappings** (defined in `nvim/lua/plugins/lsp.lua`):
+
+| Key | Action |
+|-----|--------|
+| `K` | Hover docs / type info |
+| `<leader>rn` | Rename symbol |
+| `<leader>ca` | Code actions (auto-imports, fixes) |
+| `<leader>cf` | Format file |
+| `[d` / `]d` | Prev / next diagnostic |
+| `<leader>cd` | Diagnostic detail float |
+
+**Neovim 0.11 built-in defaults:**
+
+| Key | Action |
+|-----|--------|
+| `gd` | Go to definition |
+| `gD` | Go to declaration |
+| `gi` | Go to implementation |
+| `gr` | Find references |
+| `<C-k>` | Signature help (insert mode) |
+
 ---
 
 ## remote Linux dev box setup
