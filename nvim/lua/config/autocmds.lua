@@ -30,11 +30,11 @@ vim.api.nvim_create_autocmd('FileType', {
     vim.api.nvim_create_autocmd('BufWritePre', {
       buffer = args.buf,
       callback = function()
-        vim.lsp.buf.format({ async = false })
+        vim.lsp.buf.format({ async = false, timeout_ms = 5000 })
       end,
     })
     vim.keymap.set('n', '<leader>jf', function()
-      vim.lsp.buf.format({ async = false })
+      vim.lsp.buf.format({ async = false, timeout_ms = 5000 })
     end, { buffer = args.buf, desc = 'Format JSON' })
   end,
 })
@@ -43,7 +43,7 @@ vim.api.nvim_create_autocmd('FileType', {
 vim.api.nvim_create_autocmd('BufWritePre', {
   pattern = { '*.go', '*.py', '*.json', '*.jsonc' },
   callback = function(args)
-    vim.lsp.buf.format({ bufnr = args.buf, async = false })
+    vim.lsp.buf.format({ bufnr = args.buf, async = false, timeout_ms = 5000 })
   end,
 })
 
