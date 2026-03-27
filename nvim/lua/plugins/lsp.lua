@@ -63,7 +63,7 @@ return {
           map('K',          vim.lsp.buf.hover,                                    'Hover docs')
           map('<leader>rn', vim.lsp.buf.rename,                                   'Rename')
           map('<leader>ca', vim.lsp.buf.code_action,                              'Code action')
-          map('<leader>cf', function() vim.lsp.buf.format({ async = false }) end, 'Format')
+          map('<leader>cf', function() vim.lsp.buf.format({ async = false, timeout_ms = 5000 }) end, 'Format')
           map('[d',         vim.diagnostic.goto_prev,                             'Prev diagnostic')
           map(']d',         vim.diagnostic.goto_next,                             'Next diagnostic')
           map('<leader>cd', vim.diagnostic.open_float,                            'Diagnostics float')
