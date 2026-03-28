@@ -8,6 +8,17 @@ set -as terminal-overrides ',*:Ms=\E]52;c%p1%.0s;%p2%s\007'
 if-shell -b '[ "$(echo "$(tmux -V | cut -d" " -f2 | tr -d "[:alpha:]") >= 3.3" | bc)" = "1" ]' \
   'set -g allow-passthrough on'
 
+# Vi copy mode
+set-window-option -g mode-keys vi
+bind-key [ copy-mode
+bind-key -T copy-mode-vi 'v' send -X begin-selection
+bind-key -T copy-mode-vi 'y' send -X copy-selection-and-cancel
+bind-key -T copy-mode-vi 'u' send -X halfpage-up
+bind-key -T copy-mode-vi 'd' send -X halfpage-down
+
+# Split pane above current (Ctrl+b -)
+bind - split-window -b -v
+
 # Vim-style pane resizing (repeatable)
 bind -r H resize-pane -L 5
 bind -r J resize-pane -D 5
