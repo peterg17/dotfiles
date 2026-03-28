@@ -8,5 +8,8 @@
 [core]
 	editor = nvr -cc split --remote-wait +'set bufhidden=delete'
 
+[alias]
+  lg = log --graph --oneline --all --decorate
+
 [include]
   path = ~/.gitconfig.local
