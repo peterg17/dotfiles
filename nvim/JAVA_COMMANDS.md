@@ -58,6 +58,17 @@
 | `<leader>fs` | Document symbols (methods, fields) |
 | `<leader>fS` | Workspace symbols |
 
+## Panes (splits)
+
+| Command | Action |
+|---------|--------|
+| `:split` or `<C-w>s` | Split horizontally (new pane above) |
+| `:vsplit` or `<C-w>v` | Split vertically (new pane to the left) |
+| `:split filename` | Open file in new horizontal split |
+| `<C-w><C-w>` | Cycle through panes |
+| `<C-w>h/j/k/l` | Navigate left/down/up/right |
+| `<C-w>q` | Close current pane |
+
 ## Tips
 
 - **First open** of a Java file triggers jdtls — it may take 20-30s to index a large project
