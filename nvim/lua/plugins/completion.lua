@@ -1,5 +1,13 @@
 return {
   {
+    "windwp/nvim-autopairs",
+    event = "InsertEnter",
+    opts = {
+      check_ts = true, -- use treesitter to avoid pairing inside strings/comments
+    },
+  },
+
+  {
     "saghen/blink.cmp",
     -- Use pre-compiled binaries from tagged releases (no Rust/cargo required)
     version = "*",
