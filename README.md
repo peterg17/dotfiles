@@ -149,6 +149,9 @@ These apply in any buffer where an LSP server is active (Go, Python, TypeScript,
 | `gi` | Go to implementation |
 | `gr` | Find references |
 | `<C-k>` | Signature help (insert mode) |
+| `<C-y>` | Accept completion suggestion |
+| `<C-n>` / `<C-p>` | Next / prev completion suggestion |
+| `<C-e>` | Dismiss completion menu |
 
 ---
 
