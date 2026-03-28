@@ -46,6 +46,7 @@ return {
         layout_strategy = "horizontal",
         sorting_strategy = "ascending",
         layout_config = { prompt_position = "top" },
+        path_display = { "smart" },
         -- treesitter highlighting in previewer uses removed ft_to_lang API
         preview = { treesitter = false },
       },
@@ -118,6 +119,17 @@ return {
       vim.opt.tabline = "%!TabooTabLine()"
       vim.opt.showtabline = 2  -- always show tabline
     end,
+  },
+
+  -- fidget: LSP progress indicator
+  {
+    "j-hui/fidget.nvim",
+    event = "LspAttach",
+    opts = {
+      integration = {
+        ["nvim-tree"] = { enable = false },
+      },
+    },
   },
 
   -- lualine: status line
