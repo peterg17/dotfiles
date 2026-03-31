@@ -1,3 +1,6 @@
+# Fix cursor rendering glitch on terminal resize (e.g. IntelliJ)
+set-option -g status-position top
+
 # Enable OSC52 clipboard support (copy from remote vim/nvim to local clipboard)
 # Required when using mosh + tmux on a remote machine
 set -g set-clipboard on
