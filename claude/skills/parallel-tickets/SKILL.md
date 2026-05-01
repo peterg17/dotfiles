@@ -1,6 +1,6 @@
 ---
 name: parallel-tickets
-description: Use when the user asks you to tackle multiple tickets/issues/PRs in parallel and wants them shipped as separate draft PRs. Spawns a Claude team — one implementer per ticket in its own git worktree, plus shared reviewer and tester teammates — runs each through implement → review-loop → test-loop → commit → draft PR → request AI review, and sets up a recurring cron to poll PRs for review feedback. Trigger phrases: "tackle these tickets", "work on JIRA-123 and JIRA-456 in parallel", "spawn a team for these issues", "batch these PRs", "team up on this list".
+description: 'Use when the user asks you to tackle multiple tickets/issues/PRs in parallel and wants them shipped as separate draft PRs. Spawns a Claude team — one implementer per ticket in its own git worktree, plus shared reviewer and tester teammates — runs each through implement → review-loop → test-loop → commit → draft PR → request AI review, and sets up a recurring cron to poll PRs for review feedback. Trigger phrases: "tackle these tickets", "work on JIRA-123 and JIRA-456 in parallel", "spawn a team for these issues", "batch these PRs", "team up on this list".'
 ---
 
 # Parallel-Tickets Team Workflow
