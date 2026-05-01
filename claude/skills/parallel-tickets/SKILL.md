@@ -120,18 +120,20 @@ Spawn in **one message** with multiple Agent tool calls:
 
 ## Step 6 — Set up the PR-comment polling cron
 
-After at least one PR is open, register a recurring cron to re-dispatch each implementer to poll their PR for new review comments:
+After at least one PR is open, register a recurring cron to re-dispatch each implementer to poll their PR for new review comments. **Classify by author** and route differently — don't act on human comments without the user's say-so:
 
 ```
 CronCreate {
   cron: "<off-minute> * * * *",   // e.g. "23 * * * *" — avoid :00 and :30
   recurring: true,
   durable: false,                  // session-bound; the team is too
-  prompt: "Hourly PR-comment poll: SendMessage to each implementer asking them to re-poll their PR (`gh pr view`, `gh api .../reviews`, `gh api .../comments`, plus a Codex/AI-reviewer filter) and address actionable feedback as new commits on the same branch. Skip informational comments. Don't resolve threads. Reply to threads with the project's AI footer if specified."
+  prompt: "Hourly PR-comment poll for team `<team-name>`. SendMessage each implementer with these per-comment classification rules:\n\n1. **Codex / AI reviewer** (`user.login == \"codex\"` or starts with `chatgpt`): AUTO-HANDLE. Fix as a new commit on the same branch (Conventional Commits, project AI co-author footer if specified). Reply on the thread with the AI footer pointing at the new SHA. Don't resolve the thread.\n2. **Human teammate** (any non-bot, non-AI login): SURFACE, don't act. SendMessage `team-lead` with author login, file:line / thread URL, the comment quoted verbatim, and a one-line interpretation. Don't auto-fix. Don't auto-reply on the user's behalf.\n3. **Bots** (devflow, github-actions, dependabot, codeowners-auto, integration bots, plain approvals/LGTM with no actionable content): skip silently.\n\nEach implementer reports back: how many Codex items auto-fixed (with new SHAs), how many human items surfaced, how many skipped. If any implementer is no longer alive (new session, team gone), report that to the user — don't try to respawn."
 }
 ```
 
 Pick an off-minute (`:17`, `:23`, `:47`, etc.) — avoid `:00` and `:30` to dodge the global fleet stampede. Tell the user about the **7-day auto-expiry** on recurring crons and that the cron is **session-bound** (dies when this Claude session exits).
+
+The split between AI and human authors is deliberate: Codex feedback is mechanical and worth auto-fixing on the spot; human teammate feedback often carries context, suggestions, or questions that the user wants to read and reply to personally. If the user asks for the agents to address human feedback automatically too, swap rule 2 to AUTO-HANDLE — but default is SURFACE.
 
 ## Step 7 — Hand off
 
@@ -150,6 +152,7 @@ Then go idle. **Do not poll the team yourself** — messages from teammates arri
 - **Don't** skip the `-u origin <branch>` on first push — `worktree add -b … origin/<base>` makes branches track the base, and the first push will go to the wrong place.
 - **Don't** forget the deferred-tool load. `TeamCreate` and friends won't be callable without the ToolSearch step.
 - **Don't** auto-resolve PR review threads on the user's behalf. Reply, fix, push — let the user resolve.
+- **Don't** auto-fix or auto-reply to human-teammate review comments by default — surface them to the user. Codex / AI-reviewer comments are the exception; those are mechanical enough to handle on the spot.
 
 ## Variant: language-specific overrides
 
