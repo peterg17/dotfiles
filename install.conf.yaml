@@ -15,6 +15,8 @@
     ~/.config/nvim: nvim
     ~/.ssh/config.d/00-generic: ssh/00-generic
 
+    ~/.claude/skills/parallel-tickets: claude/skills/parallel-tickets
+
     ~/.tmux.conf.local: .tmux.conf.local
 
 - shell:
