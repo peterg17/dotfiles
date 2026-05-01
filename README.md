@@ -181,3 +181,15 @@ To get "Claude requires your input" notifications forwarded to iTerm2 on your Ma
 2. In iTerm2 on your Mac: Settings → Profiles → Terminal → enable **"Send notification on bell"**
 
 Notifications travel over the existing SSH session as an iTerm2 escape sequence — no tunnels or third-party services needed.
+
+## Claude Code skills
+
+Portable skills live under `claude/skills/<name>/SKILL.md` and are symlinked into `~/.claude/skills/<name>` on install. Per-skill (not whole-dir) so plugin-shipped or host-only skills are left alone.
+
+- **New machine** (`./install`): dotbot creates the symlinks via `install.conf.yaml`.
+- **Remote box** (`setup-remote.sh`): the same script symlinks every skill in `claude/skills/`.
+
+To add a new portable skill: drop it under `claude/skills/<name>/SKILL.md` and add a matching `~/.claude/skills/<name>: claude/skills/<name>` line to `install.conf.yaml`. Remote machines pick it up automatically on the next `setup-remote.sh` run.
+
+Currently shipped:
+- **`parallel-tickets`** — spawn a Claude team to tackle multiple tickets in parallel (one implementer per ticket in its own worktree, plus shared reviewer + tester, plus an hourly PR-comment polling cron).
