@@ -4,6 +4,8 @@
 
 - create:
     - ~/.ssh/config.d
+    - ~/.config
+    - ~/.claude/skills
 
 - link:
     ~/.zshrc:
@@ -20,9 +22,9 @@
     ~/.tmux.conf.local: .tmux.conf.local
 
 - shell:
-    - command: "[ -e ~/.gitconfig ] && { [ -L ~/.gitconfig ] || grep -qF 'path = ~/dotfiles/.gitconfig' ~/.gitconfig || printf '\\n[include]\\n\\tpath = ~/dotfiles/.gitconfig\\n' >> ~/.gitconfig; } || ln -sf ~/dotfiles/.gitconfig ~/.gitconfig"
+    - command: "if [ -L ~/.gitconfig ]; then ln -sf \"$PWD/.gitconfig\" ~/.gitconfig; elif [ -e ~/.gitconfig ]; then grep -qF \"path = $PWD/.gitconfig\" ~/.gitconfig || printf '\\n[include]\\n\\tpath = %s/.gitconfig\\n' \"$PWD\" >> ~/.gitconfig; else ln -sf \"$PWD/.gitconfig\" ~/.gitconfig; fi"
       description: Symlink .gitconfig on fresh install, inject include if file already exists
-    - command: "python3 ~/dotfiles/claude/merge-settings.py ~/dotfiles/claude/settings.json"
+    - command: "python3 \"$PWD/claude/merge-settings.py\" \"$PWD/claude/settings.json\""
       description: Merge public Claude settings into ~/.claude/settings.json (bootstraps on fresh install, preserves extra keys like DD plugins on re-install)
     - command: "git config --local user.email 'petergriggs17@gmail.com' && git config --local user.name 'Peter Griggs'"
       description: Pin personal email for the dotfiles repo (overrides any global/local config)
