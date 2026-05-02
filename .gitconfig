@@ -5,6 +5,7 @@
 [user]
   name = Peter Griggs
   email = petergriggs17@gmail.com
+	signingkey = ~/.ssh/id_ed25519_signing.pub
 [core]
 	editor = nvr -cc split --remote-wait +'set bufhidden=delete'
 
@@ -13,3 +14,11 @@
 
 [include]
   path = ~/.gitconfig.local
+[gpg]
+	format = ssh
+[commit]
+	gpgsign = true
+[tag]
+	gpgsign = true
+[gpg "ssh"]
+	allowedSignersFile = ~/.ssh/allowed_signers
