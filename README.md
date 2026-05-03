@@ -193,3 +193,40 @@ To add a new portable skill: drop it under `claude/skills/<name>/SKILL.md` and a
 
 Currently shipped:
 - **`parallel-tickets`** — spawn a Claude team to tackle multiple tickets in parallel (one implementer per ticket in its own worktree, plus shared reviewer + tester, plus an hourly PR-comment polling cron).
+
+## Pi / shared agent skills
+
+Portable cross-agent skills live under `agents/skills/<name>/SKILL.md` and are symlinked into:
+
+- `~/.pi/agent/skills/<name>` for pi
+- `~/.agents/skills/<name>` for Agent Skills compatible tools
+- `~/.claude/skills/<name>` for Claude
+
+Currently shipped:
+
+- **`obsidian-inbox-cleanup`** — processes the Obsidian vault `Index.md` capture inbox, files links/ideas into notes, updates MOCs, and verifies unresolved links.
+
+## Obsidian daily inbox cleanup
+
+This repo includes a launchd job for the notes vault at `/Users/peterg17/Documents/notes`:
+
+- Script: `pi/scripts/process-index.sh`
+- LaunchAgent: `pi/launchd/com.peterg17.obsidian-index-cleanup.plist`
+- Schedule: daily at 8:30 PM local time
+- Logs: `/Users/peterg17/Documents/notes/.pi/logs/index-cleanup.{out,err}.log`
+
+Enable on macOS:
+
+```sh
+mkdir -p ~/Library/LaunchAgents
+cp pi/launchd/com.peterg17.obsidian-index-cleanup.plist ~/Library/LaunchAgents/
+launchctl unload ~/Library/LaunchAgents/com.peterg17.obsidian-index-cleanup.plist 2>/dev/null || true
+launchctl load ~/Library/LaunchAgents/com.peterg17.obsidian-index-cleanup.plist
+launchctl list | grep com.peterg17.obsidian-index-cleanup
+```
+
+Run manually:
+
+```sh
+/Users/peterg17/Documents/notes/.pi/scripts/process-index.sh
+```
