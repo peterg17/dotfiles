@@ -108,8 +108,10 @@ if command -v rbenv 1>/dev/null 2>&1; then
 fi
 
 if [[ "$(uname)" == "Darwin" ]]; then
-  echo 'export PATH="/Applications/Sublime Text.app/Contents/SharedSupport/bin:$PATH"' >> ~/.zprofile
-  export ANTHROPIC_API_KEY=$(security find-generic-password -a "$USER" -s "ANTHROPIC_API_KEY" -w)
+  export PATH="/Applications/Sublime Text.app/Contents/SharedSupport/bin:$PATH"
+  if anthropic_key=$(security find-generic-password -a "$USER" -s "ANTHROPIC_API_KEY" -w 2>/dev/null); then
+    export ANTHROPIC_API_KEY="$anthropic_key"
+  fi
 fi
 
 # Created by `pipx` on 2025-09-15 08:19:39
