@@ -24,7 +24,12 @@
     ~/.agents/skills/obsidian-inbox-cleanup: agents/skills/obsidian-inbox-cleanup
     ~/.pi/agent/skills/obsidian-inbox-cleanup: agents/skills/obsidian-inbox-cleanup
 
-    ~/.tmux.conf.local: .tmux.conf.local
+    ~/.tmux.conf:
+      path: tmux/.tmux.conf
+      force: true
+    ~/.tmux.conf.local:
+      path: tmux/.tmux.conf.local
+      force: true
 
 - shell:
     - command: "if [ -L ~/.gitconfig ]; then ln -sf \"$PWD/.gitconfig\" ~/.gitconfig; elif [ -e ~/.gitconfig ]; then grep -qF \"path = $PWD/.gitconfig\" ~/.gitconfig || printf '\\n[include]\\n\\tpath = %s/.gitconfig\\n' \"$PWD\" >> ~/.gitconfig; else ln -sf \"$PWD/.gitconfig\" ~/.gitconfig; fi"
@@ -35,5 +40,3 @@
       description: Pin personal email for the dotfiles repo (overrides any global/local config)
     - command: "git config --global core.editor \"nvr -cc split --remote-wait +'set bufhidden=delete'\""
       description: Set nvr as global git editor
-    - command: "touch ~/.tmux.conf && grep -qF 'source-file ~/.tmux.conf.local' ~/.tmux.conf || printf '\\nsource-file ~/.tmux.conf.local\\n' >> ~/.tmux.conf"
-      description: Inject tmux.conf.local source (skipped if already present)
