@@ -6,6 +6,8 @@
     - ~/.ssh/config.d
     - ~/.config
     - ~/.claude/skills
+    - ~/.agents/skills
+    - ~/.pi/agent/skills
 
 - link:
     ~/.zshrc:
@@ -18,6 +20,9 @@
     ~/.ssh/config.d/00-generic: ssh/00-generic
 
     ~/.claude/skills/parallel-tickets: claude/skills/parallel-tickets
+    ~/.claude/skills/obsidian-inbox-cleanup: agents/skills/obsidian-inbox-cleanup
+    ~/.agents/skills/obsidian-inbox-cleanup: agents/skills/obsidian-inbox-cleanup
+    ~/.pi/agent/skills/obsidian-inbox-cleanup: agents/skills/obsidian-inbox-cleanup
 
     ~/.tmux.conf.local: .tmux.conf.local
 
