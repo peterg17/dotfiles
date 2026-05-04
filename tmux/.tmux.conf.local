@@ -1,5 +1,9 @@
 # Fix cursor rendering glitch on terminal resize (e.g. IntelliJ)
 set-option -g status-position top
+set -g mouse on
+
+# Keep status bar to a single line to prevent display corruption
+set-option -g status-right '"#{=21:pane_title}" %H:%M %d-%b-%y'
 
 # Show pane titles in pane borders.
 set -g pane-border-status top
@@ -43,3 +47,8 @@ bind -r H resize-pane -L 5
 bind -r J resize-pane -D 5
 bind -r K resize-pane -U 5
 bind -r L resize-pane -R 5
+
+# Enable extended keys (needed for modified Enter, etc. in pi/Claude TUIs)
+set -g extended-keys on
+set -g extended-keys-format csi-u
+set -as terminal-features 'xterm*:extkeys'

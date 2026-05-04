@@ -12,8 +12,6 @@
 [alias]
   lg = log --graph --oneline --all --decorate
 
-[include]
-  path = ~/.gitconfig.local
 [gpg]
 	format = ssh
 [commit]
@@ -22,3 +20,7 @@
 	gpgsign = true
 [gpg "ssh"]
 	allowedSignersFile = ~/.ssh/allowed_signers
+
+# Keep this last so machine-specific overrides (e.g. dotfiles-dd) win.
+[include]
+	path = ~/.gitconfig.local
