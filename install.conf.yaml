@@ -23,6 +23,7 @@
     ~/.claude/skills/obsidian-inbox-cleanup: agents/skills/obsidian-inbox-cleanup
     ~/.agents/skills/obsidian-inbox-cleanup: agents/skills/obsidian-inbox-cleanup
     ~/.pi/agent/skills/obsidian-inbox-cleanup: agents/skills/obsidian-inbox-cleanup
+    ~/.pi/settings.json: pi/settings.json
 
     ~/.tmux.conf:
       path: tmux/.tmux.conf
