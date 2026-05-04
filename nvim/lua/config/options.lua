@@ -38,3 +38,6 @@ vim.o.updatetime = 250     -- faster CursorHold / gitsigns updates
 vim.o.expandtab = true
 vim.o.shiftwidth = 4
 vim.o.tabstop = 4
+
+-- Auto-reload files changed outside Neovim (paired with checktime autocmd in autocmds.lua)
+vim.o.autoread = true

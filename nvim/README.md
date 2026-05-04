@@ -52,6 +52,16 @@ Tips:
 | `<C-w>h/j/k/l` | Navigate left/down/up/right |
 | `<C-w>q` | Close current pane |
 
+## Files & buffers
+
+| Command | Action |
+|---------|--------|
+| `:e` / `:edit` | Reload current buffer from disk (refuses if unsaved) |
+| `:e!` | Force-reload, discarding unsaved changes |
+| `:checktime` | Check if the file changed on disk and prompt to reload |
+
+`autoread` is enabled and a `checktime` autocmd fires on `FocusGained`, `BufEnter`, and idle — so files modified externally (e.g. by `git checkout`, formatters, or another editor) reload automatically. A `vim.notify` message is shown when a buffer is reloaded.
+
 ## Language-specific docs
 
 - **Java (jdtls)**: see [`JAVA_COMMANDS.md`](./JAVA_COMMANDS.md) for Java refactors, neotest, and nvim-dap keymaps.

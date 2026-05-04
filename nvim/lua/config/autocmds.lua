@@ -64,3 +64,17 @@ vim.api.nvim_create_autocmd({ 'VimEnter', 'ColorScheme' }, {
     vim.api.nvim_set_hl(0, 'TabLineSel', { bold = true, reverse = true })
   end,
 })
+
+-- Trigger autoread: check if the file changed on disk on focus / buffer enter / idle
+vim.api.nvim_create_autocmd({ 'FocusGained', 'BufEnter', 'CursorHold', 'CursorHoldI' }, {
+  desc = 'Reload buffer if the underlying file changed on disk',
+  command = 'checktime',
+})
+
+-- Notify when a buffer is auto-reloaded (useful when switching branches, etc.)
+vim.api.nvim_create_autocmd('FileChangedShellPost', {
+  desc = 'Notify when a file is reloaded from disk',
+  callback = function()
+    vim.notify('File changed on disk — buffer reloaded', vim.log.levels.INFO)
+  end,
+})
