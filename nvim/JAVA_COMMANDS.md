@@ -1,19 +1,6 @@
 # Java in Neovim (nvim-jdtls)
 
-## LSP (universal)
-
-| Key | Action |
-|-----|--------|
-| `gd` | Go to definition |
-| `gr` | Go to references |
-| `gi` | Go to implementation |
-| `K` | Hover docs / Javadoc |
-| `<leader>rn` | Rename symbol |
-| `<leader>ca` | Code action (import, generate, etc.) |
-| `<leader>cf` | Format file |
-| `<leader>cd` | Show diagnostics float |
-| `[d` / `]d` | Prev / next diagnostic |
-| `Ctrl-o` / `Ctrl-i` | Jump back / forward |
+For universal LSP keymaps (`gd`, `gr`, `K`, `[d`/`]d` for diagnostics, etc.) see [`README.md`](./README.md). This file covers Java-specific extras layered on top by `nvim-jdtls`, plus testing and debugging.
 
 ## Java-specific (`<leader>j`)
 
@@ -49,30 +36,10 @@
 | `<leader>dq` | Terminate session |
 | `<leader>du` | Toggle debug UI |
 
-## Find (Telescope)
-
-| Key | Action |
-|-----|--------|
-| `<leader>ff` | Find file by name |
-| `<leader>fg` | Live grep (search in files) |
-| `<leader>fs` | Document symbols (methods, fields) |
-| `<leader>fS` | Workspace symbols |
-
-## Panes (splits)
-
-| Command | Action |
-|---------|--------|
-| `:split` or `<C-w>s` | Split horizontally (new pane above) |
-| `:vsplit` or `<C-w>v` | Split vertically (new pane to the left) |
-| `:split filename` | Open file in new horizontal split |
-| `<C-w><C-w>` | Cycle through panes |
-| `<C-w>h/j/k/l` | Navigate left/down/up/right |
-| `<C-w>q` | Close current pane |
-
 ## Tips
 
 - **First open** of a Java file triggers jdtls — it may take 20-30s to index a large project
 - `:LspInfo` — check if jdtls is attached to the current buffer
 - `:LspLog` — debug jdtls startup issues
 - `<leader>ca` on an unresolved symbol — offers "Add import" automatically
-- Which-key popup: press `<leader>` and wait to see all available keymaps
+- For Telescope, panes, and other universal keymaps see [`README.md`](./README.md)
