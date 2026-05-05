@@ -57,25 +57,34 @@ return {
   {
     "nvim-tree/nvim-tree.lua",
     dependencies = { "nvim-tree/nvim-web-devicons" },
+    cmd = { "NvimTreeToggle", "NvimTreeFindFileToggle", "NvimTreeOpen", "NvimTreeFocus" },
     keys = {
       { "<leader>e", "<cmd>NvimTreeFindFileToggle<cr>", desc = "Toggle file tree" },
     },
-    opts = {
-      sort = { sorter = "case_sensitive" },
-      view = { width = 35 },
-      renderer = { group_empty = true },
-      filters = { dotfiles = false },
-      update_focused_file = { enable = true },
-      git = { enable = true },
-      filesystem_watchers = { enable = false },
-      on_attach = function(bufnr)
-        local api = require("nvim-tree.api")
-        -- load all defaults first
-        api.config.mappings.default_on_attach(bufnr)
-        -- then override t to open in new tab and switch to it
-        vim.keymap.set("n", "t", api.node.open.tab, { buffer = bufnr, noremap = true, silent = true, nowait = true, desc = "Open in new tab" })
-      end,
-    },
+    -- Explicit setup() call instead of `opts`, because lazy.nvim's auto-derived
+    -- main-module name for `nvim-tree.lua` is unreliable ("nvim-tree not set up").
+    config = function()
+      -- Disable netrw at the very start (recommended by nvim-tree docs).
+      vim.g.loaded_netrw = 1
+      vim.g.loaded_netrwPlugin = 1
+
+      require("nvim-tree").setup({
+        sort = { sorter = "case_sensitive" },
+        view = { width = 35 },
+        renderer = { group_empty = true },
+        filters = { dotfiles = false },
+        update_focused_file = { enable = true },
+        git = { enable = true },
+        filesystem_watchers = { enable = false },
+        on_attach = function(bufnr)
+          local api = require("nvim-tree.api")
+          -- load all defaults first
+          api.config.mappings.default_on_attach(bufnr)
+          -- then override t to open in new tab and switch to it
+          vim.keymap.set("n", "t", api.node.open.tab, { buffer = bufnr, noremap = true, silent = true, nowait = true, desc = "Open in new tab" })
+        end,
+      })
+    end,
   },
 
   -- which-key: popup showing available keymaps
