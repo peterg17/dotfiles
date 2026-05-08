@@ -8,6 +8,11 @@
     - ~/.claude/skills
     - ~/.agents/skills
     - ~/.pi/agent/skills
+    - ~/.pi/agent/agents
+    - ~/.pi/agent/prompts
+    - ~/.pi/agent/extensions
+    - ~/.pi/agent/extensions/subagent
+    - ~/.pi/agent/skills/ticket-workflow
 
 - link:
     ~/.zshrc:
@@ -20,9 +25,27 @@
     ~/.ssh/config.d/00-generic: ssh/00-generic
 
     ~/.claude/skills/parallel-tickets: claude/skills/parallel-tickets
+    ~/.claude/skills/single-ticket-team: claude/skills/single-ticket-team
     ~/.claude/skills/obsidian-inbox-cleanup: agents/skills/obsidian-inbox-cleanup
     ~/.agents/skills/obsidian-inbox-cleanup: agents/skills/obsidian-inbox-cleanup
     ~/.pi/agent/skills/obsidian-inbox-cleanup: agents/skills/obsidian-inbox-cleanup
+    ~/.pi/agent/skills/ticket-workflow/SKILL.md: pi/skills/ticket-workflow/SKILL.md
+
+    ~/.pi/agent/extensions/subagent/index.ts: pi/extensions/subagent/index.ts
+    ~/.pi/agent/extensions/subagent/agents.ts: pi/extensions/subagent/agents.ts
+
+    ~/.pi/agent/agents/ticket-jira-analyst.md: pi/agents/ticket-jira-analyst.md
+    ~/.pi/agent/agents/ticket-scout.md: pi/agents/ticket-scout.md
+    ~/.pi/agent/agents/ticket-planner.md: pi/agents/ticket-planner.md
+    ~/.pi/agent/agents/ticket-implementer.md: pi/agents/ticket-implementer.md
+    ~/.pi/agent/agents/ticket-reviewer.md: pi/agents/ticket-reviewer.md
+    ~/.pi/agent/agents/ticket-tester.md: pi/agents/ticket-tester.md
+    ~/.pi/agent/agents/ticket-validator.md: pi/agents/ticket-validator.md
+
+    ~/.pi/agent/prompts/ticket.md: pi/prompts/ticket.md
+    ~/.pi/agent/prompts/tickets.md: pi/prompts/tickets.md
+    ~/.pi/agent/prompts/plan-ticket.md: pi/prompts/plan-ticket.md
+    ~/.pi/agent/prompts/review-ticket.md: pi/prompts/review-ticket.md
 
     ~/.tmux.conf:
       path: tmux/.tmux.conf
