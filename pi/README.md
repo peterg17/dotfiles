@@ -4,12 +4,21 @@ This directory contains dotfiles-managed configuration for [`pi`](https://pi.dev
 
 ## Ticket teammate workflow
 
-The ticket workflow is a pi adaptation of the Claude `parallel-tickets` workflow. It uses the `subagent` extension plus specialized teammate agents to handle technical Jira work end-to-end.
+The ticket workflow is a pi adaptation of the Claude `parallel-tickets` workflow. It uses the `subagent` extension (or the `team-tmux` extension for visual teams) plus specialized teammate agents to handle technical Jira work end-to-end.
+
+Two execution modes:
+
+- **Subagent mode** (headless) — the `ticket-workflow` skill runs sub-pi processes in chains/parallel and returns results inline.
+- **Visual team mode** (tmux) — the `team-ticket` skill spawns labeled tmux panes for each agent (reviewer, tester, implementer-per-ticket) with inter-agent messaging and PR-comment polling. Pi equivalent of [Claude Code Agent Teams](https://code.claude.com/docs/en/agent-teams).
 
 ### Installed resources
 
-- Skill: `pi/skills/ticket-workflow/SKILL.md`
-- Extension: `pi/extensions/subagent/`
+- Skills:
+  - `pi/skills/ticket-workflow/SKILL.md` — headless subagent orchestration
+  - `pi/skills/team-ticket/SKILL.md` — visual tmux team orchestration (1–5 tickets, shared reviewer/tester, PR comment polling)
+- Extensions:
+  - `pi/extensions/subagent/` — spawn isolated sub-pi processes for chained / parallel work
+  - `pi/extensions/team-tmux/` — visual agent teams in tmux panes; registers `team_create`, `team_spawn`, `team_send`, `team_status`, `team_watch_pr`, `team_unwatch_pr`, `team_destroy` tools and a teammate `send_message` tool
 - Agents:
   - `ticket-jira-analyst` — reads/summarizes Jira tickets
   - `ticket-scout` — investigates relevant code/tests/commands
@@ -63,6 +72,24 @@ Review the current diff against a ticket:
 /review-ticket PROJ-123
 ```
 
+Spawn a visual tmux team for a ticket:
+
+```text
+spawn a team for PROJ-123
+```
+
+or explicitly:
+
+```text
+/skill:team-ticket PROJ-123
+```
+
+Multiple tickets in parallel with a visual team:
+
+```text
+/skill:team-ticket PROJ-123 PROJ-456 PROJ-789
+```
+
 ### Commit / PR behavior
 
 The workflow will not commit, push, or create PRs unless you explicitly ask, e.g.:
@@ -105,3 +132,14 @@ ls ~/.pi/agent/extensions/subagent/index.ts
 ls ~/.pi/agent/agents/ticket-planner.md
 ls ~/.pi/agent/skills/ticket-workflow/SKILL.md
 ```
+
+If the `team_create` tool is unavailable, verify the team-tmux extension links:
+
+```sh
+ls ~/.pi/agent/extensions/team-tmux/index.ts
+ls ~/.pi/agent/extensions/team-tmux/teammate.ts
+ls ~/.pi/agent/extensions/team-tmux/ipc.ts
+ls ~/.pi/agent/skills/team-ticket/SKILL.md
+```
+
+The team-tmux extension also requires `tmux` 3.2+ and the `gh` CLI (the latter is only needed for `team_watch_pr`).
