@@ -193,6 +193,7 @@ To add a new portable skill: drop it under `claude/skills/<name>/SKILL.md` and a
 
 Currently shipped:
 - **`parallel-tickets`** — spawn a Claude team to tackle multiple tickets in parallel (one implementer per ticket in its own worktree, plus shared reviewer + tester, plus an hourly PR-comment polling cron).
+- **`single-ticket-team`** — single-ticket counterpart to `parallel-tickets`. Spawns a backgrounded team (one implementer in a worktree + shared reviewer + tester + PR-comment cron) for one non-trivial ticket while the user keeps working in the main session.
 
 ## Pi / shared agent skills
 
