@@ -82,6 +82,14 @@ export function sendMessage(teamDir: string, from: string, to: string, content: 
 	const finalPath = path.join(inboxDir, `${id}.json`);
 	fs.writeFileSync(tmpPath, JSON.stringify(msg), "utf-8");
 	fs.renameSync(tmpPath, finalPath);
+
+	// Append to message log for dashboard display
+	try {
+		const firstLine = content.split("\n")[0].slice(0, 120);
+		const ts = new Date().toLocaleTimeString("en-US", { hour12: false });
+		const logLine = `[${ts}] @${from} → @${to}: ${firstLine}\n`;
+		fs.appendFileSync(path.join(teamDir, "messages.log"), logLine, "utf-8");
+	} catch { /* non-critical */ }
 }
 
 export function pollMessages(teamDir: string, agentName: string): TeamMessage[] {

@@ -21,6 +21,12 @@ import { ensureInbox, pollMessages, readMeta, sendMessage, writeStatus } from ".
 
 const POLL_INTERVAL_MS = 2000;
 
+/** Max auto-continuation nudges before giving up (prevents infinite loops). */
+const MAX_AUTO_CONTINUE_NUDGES = 5;
+
+/** Only nudge if the turn lasted longer than this (short turns = "acknowledged" / idle). */
+const MIN_TURN_DURATION_FOR_NUDGE_MS = 5_000;
+
 export default function (pi: ExtensionAPI) {
 	const teamDir = process.env.PI_TEAM_DIR;
 	const agentName = process.env.PI_TEAM_AGENT;
@@ -30,6 +36,12 @@ export default function (pi: ExtensionAPI) {
 
 	let isStreaming = false;
 	let pollTimer: ReturnType<typeof setInterval> | null = null;
+
+	// ── Turn tracking for auto-continuation ───────────────────────
+	let turnStartTime = 0;
+	let messagesSentThisTurn = 0;
+	let consecutiveNoCommTurns = 0;
+	let totalNudgesSent = 0;
 
 	// ── Helpers ────────────────────────────────────────────────────
 
@@ -76,12 +88,40 @@ export default function (pi: ExtensionAPI) {
 
 	pi.on("agent_start", async () => {
 		isStreaming = true;
+		turnStartTime = Date.now();
+		messagesSentThisTurn = 0;
 		writeStatus(teamDir, agentName, { state: "working" });
 	});
 
 	pi.on("agent_end", async () => {
 		isStreaming = false;
 		writeStatus(teamDir, agentName, { state: "idle" });
+
+		// ── Auto-continuation nudge ──────────────────────────────
+		// If the agent did meaningful work (turn > MIN duration) but
+		// didn't send any messages to teammates, it likely stalled
+		// mid-workflow.  Nudge it to continue.
+		const turnDuration = Date.now() - turnStartTime;
+		if (
+			messagesSentThisTurn === 0 &&
+			turnDuration > MIN_TURN_DURATION_FOR_NUDGE_MS &&
+			totalNudgesSent < MAX_AUTO_CONTINUE_NUDGES
+		) {
+			consecutiveNoCommTurns++;
+			totalNudgesSent++;
+			setTimeout(() => {
+				deliverMessage(
+					"[SYSTEM — auto-continue] Your turn completed work but you did NOT call send_message. " +
+					"Your workflow REQUIRES communicating with teammates after every phase. " +
+					"Review your task and continue with the next step: " +
+					"send a review request, test request, status update, or completion report " +
+					"to the appropriate teammate using the send_message tool. " +
+					`(auto-nudge ${totalNudgesSent}/${MAX_AUTO_CONTINUE_NUDGES})`
+				);
+			}, 2000);
+		} else if (messagesSentThisTurn > 0) {
+			consecutiveNoCommTurns = 0;
+		}
 	});
 
 	// ── Session lifecycle ─────────────────────────────────────────
@@ -102,18 +142,24 @@ export default function (pi: ExtensionAPI) {
 		// Send initial task (if the spawner wrote one)
 		const taskFile = path.join(teamDir, "tasks", `${agentName}.md`);
 		setTimeout(() => {
+			let taskSent = false;
 			try {
 				if (fs.existsSync(taskFile)) {
 					const task = fs.readFileSync(taskFile, "utf-8");
 					fs.unlinkSync(taskFile);
 					if (task.trim()) {
 						pi.sendUserMessage(task);
+						taskSent = true;
 					}
 				}
 			} catch {
 				/* task file may have been consumed already */
 			}
-			writeStatus(teamDir, agentName, { state: "idle" });
+			// Only set idle if no task was sent — otherwise agent_start
+			// will fire and set "working", and we don't want to race it.
+			if (!taskSent) {
+				writeStatus(teamDir, agentName, { state: "idle" });
+			}
 		}, 1500);
 	});
 
@@ -167,6 +213,7 @@ export default function (pi: ExtensionAPI) {
 			}
 
 			sendMessage(teamDir, agentName, params.to, params.content);
+			messagesSentThisTurn++;
 			return {
 				content: [{ type: "text", text: `✓ Message sent to @${params.to}` }],
 				details: {},
