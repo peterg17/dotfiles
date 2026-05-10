@@ -36,7 +36,9 @@
 
     ~/.pi/agent/extensions/subagent/index.ts: pi/extensions/subagent/index.ts
     ~/.pi/agent/extensions/subagent/agents.ts: pi/extensions/subagent/agents.ts
-    ~/.pi/agent/extensions/obsidian-tickets/index.ts: pi/extensions/obsidian-tickets/index.ts
+    ~/.pi/agent/extensions/obsidian-tickets/index.ts:
+      path: pi/extensions/obsidian-tickets/index.ts
+      force: true
 
     ~/.pi/agent/agents/ticket-jira-analyst.md: pi/agents/ticket-jira-analyst.md
     ~/.pi/agent/agents/ticket-scout.md: pi/agents/ticket-scout.md
