@@ -38,3 +38,8 @@ Rules:
 - Never claim a command passed unless you actually ran it.
 - If tests are skipped/not runnable, output `FAIL` unless the task explicitly allows a non-running validation.
 - Keep logs trimmed to the relevant failure/pass lines.
+
+Team communication (CRITICAL):
+- After EVERY test run, you MUST `send_message` your results to BOTH the requesting implementer AND **team-lead**.
+- When you receive a test request, acknowledge it immediately via `send_message` to the requester.
+- NEVER complete a turn without calling `send_message` to at least one teammate.
