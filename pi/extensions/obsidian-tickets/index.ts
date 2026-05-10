@@ -156,14 +156,36 @@ function normalizePriority(value: unknown): string {
 	return aliases[token] || token;
 }
 
+function isInsideOrEqual(parent: string, child: string): boolean {
+	const relative = path.relative(parent, child);
+	return relative === "" || (!!relative && !relative.startsWith("..") && !path.isAbsolute(relative));
+}
+
 function vaultPath(rel: string): string {
-	return path.join(configuredVaultRoot(), rel);
+	const root = configuredVaultRoot();
+	const abs = path.resolve(root, rel);
+	if (!isInsideOrEqual(root, abs)) {
+		throw new Error(`Path resolves outside configured Obsidian vault: ${rel}`);
+	}
+	return abs;
 }
 
 function relativeToVault(absOrRel: string): string {
 	const withoutAt = absOrRel.trim().replace(/^@/, "");
-	const abs = path.isAbsolute(withoutAt) ? withoutAt : vaultPath(withoutAt);
-	return path.relative(configuredVaultRoot(), abs).split(path.sep).join("/");
+	const root = configuredVaultRoot();
+	const abs = path.isAbsolute(withoutAt) ? path.resolve(withoutAt) : path.resolve(root, withoutAt);
+	if (!isInsideOrEqual(root, abs)) {
+		throw new Error(`Path is outside configured Obsidian vault: ${absOrRel}`);
+	}
+	return path.relative(root, abs).split(path.sep).join("/");
+}
+
+function tryRelativeToVault(absOrRel: string): string | null {
+	try {
+		return relativeToVault(absOrRel);
+	} catch {
+		return null;
+	}
 }
 
 function wikiLink(relPath: string, label?: string): string {
@@ -417,15 +439,20 @@ function resolveTicket(identifier: string): string | null {
 	let s = identifier.trim().replace(/^@/, "");
 	const wiki = s.match(/^\[\[([^\]|]+)(?:\|[^\]]+)?\]\]$/);
 	if (wiki) s = wiki[1];
-	if (s.endsWith(".md")) {
-		const rel = relativeToVault(s);
-		if (fs.existsSync(vaultPath(rel))) return rel;
-	}
-	const withoutMd = s.replace(/\.md$/i, "");
+
 	const tickets = listTickets();
-	const exact = tickets.find((t) => t.path.replace(/\.md$/i, "") === withoutMd || t.title === withoutMd);
+	if (s.endsWith(".md")) {
+		const rel = tryRelativeToVault(s);
+		if (rel) {
+			const direct = tickets.find((ticket) => ticket.path === rel);
+			if (direct) return direct.path;
+		}
+	}
+
+	const withoutMd = s.replace(/\.md$/i, "");
+	const exact = tickets.find((ticket) => ticket.path.replace(/\.md$/i, "") === withoutMd || ticket.title === withoutMd);
 	if (exact) return exact.path;
-	const base = tickets.find((t) => path.basename(t.path, ".md") === withoutMd || t.title.toLowerCase() === withoutMd.toLowerCase());
+	const base = tickets.find((ticket) => path.basename(ticket.path, ".md") === withoutMd || ticket.title.toLowerCase() === withoutMd.toLowerCase());
 	return base?.path ?? null;
 }
 
