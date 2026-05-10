@@ -18,6 +18,7 @@ Two execution modes:
   - `pi/skills/team-ticket/SKILL.md` — visual tmux team orchestration (1–5 tickets, shared reviewer/tester, PR comment polling)
 - Extensions/packages:
   - `pi/extensions/subagent/` — spawn isolated sub-pi processes for chained / parallel work
+  - `pi/extensions/obsidian-tickets/` — create/update Obsidian ticket notes and generate a Dataview-first Agentic Tasks dashboard with Markdown fallback
   - `git:github.com/peterg17/pi-teams-tmux` — visual agent teams in tmux panes; registers `team_create`, `team_spawn`, `team_send`, `team_status`, `team_watch_pr`, `team_unwatch_pr`, `team_destroy` tools and a teammate `send_message` tool
 - Agents:
   - `ticket-jira-analyst` — reads/summarizes Jira tickets
@@ -132,6 +133,19 @@ ls ~/.pi/agent/extensions/subagent/index.ts
 ls ~/.pi/agent/agents/ticket-planner.md
 ls ~/.pi/agent/skills/ticket-workflow/SKILL.md
 ```
+
+### Obsidian ticket dashboard
+
+The `obsidian-tickets` extension is installed from `pi/extensions/obsidian-tickets/index.ts`. It keeps ticket frontmatter as the source of truth and regenerates `00 Maps/Agentic Tasks.md` with Dataview sections for status, priority, project/epic, and recently updated tickets. A plain Markdown fallback is included in the generated dashboard for vaults without Dataview enabled.
+
+Recommended setup:
+
+1. Enable the Obsidian Dataview community plugin.
+2. Configure the vault path with `OBSIDIAN_TICKETS_VAULT` if your vault is not at the default `~/Documents/notes`.
+3. Optionally configure `OBSIDIAN_TICKETS_DIR`, `OBSIDIAN_TICKETS_SCAN_DIRS`, and `OBSIDIAN_TICKETS_DASHBOARD` before launching pi.
+4. Run `/tickets-rebuild --dry-run`, then `/tickets-rebuild` to backfill existing `type: ticket` notes and untyped legacy notes in the configured ticket folders.
+
+Kanban plugin sync is deferred; use the generated Dataview dashboard as the canonical board view for now.
 
 If the `team_create` tool is unavailable, verify the `pi-team-tmux` package and team skill:
 
