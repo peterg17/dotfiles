@@ -12,7 +12,6 @@
     - ~/.pi/agent/prompts
     - ~/.pi/agent/extensions
     - ~/.pi/agent/extensions/subagent
-    - ~/.pi/agent/extensions/team-tmux
     - ~/.pi/agent/skills/ticket-workflow
     - ~/.pi/agent/skills/team-ticket
 
@@ -36,11 +35,6 @@
 
     ~/.pi/agent/extensions/subagent/index.ts: pi/extensions/subagent/index.ts
     ~/.pi/agent/extensions/subagent/agents.ts: pi/extensions/subagent/agents.ts
-
-    ~/.pi/agent/extensions/team-tmux/index.ts: pi/extensions/team-tmux/index.ts
-    ~/.pi/agent/extensions/team-tmux/teammate.ts: pi/extensions/team-tmux/teammate.ts
-    ~/.pi/agent/extensions/team-tmux/ipc.ts: pi/extensions/team-tmux/ipc.ts
-    ~/.pi/agent/extensions/team-tmux/README.md: pi/extensions/team-tmux/README.md
 
     ~/.pi/agent/agents/ticket-jira-analyst.md: pi/agents/ticket-jira-analyst.md
     ~/.pi/agent/agents/ticket-scout.md: pi/agents/ticket-scout.md

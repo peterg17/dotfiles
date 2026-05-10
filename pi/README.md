@@ -16,9 +16,9 @@ Two execution modes:
 - Skills:
   - `pi/skills/ticket-workflow/SKILL.md` — headless subagent orchestration
   - `pi/skills/team-ticket/SKILL.md` — visual tmux team orchestration (1–5 tickets, shared reviewer/tester, PR comment polling)
-- Extensions:
+- Extensions/packages:
   - `pi/extensions/subagent/` — spawn isolated sub-pi processes for chained / parallel work
-  - `pi/extensions/team-tmux/` — visual agent teams in tmux panes; registers `team_create`, `team_spawn`, `team_send`, `team_status`, `team_watch_pr`, `team_unwatch_pr`, `team_destroy` tools and a teammate `send_message` tool
+  - `git:github.com/peterg17/pi-teams-tmux` — visual agent teams in tmux panes; registers `team_create`, `team_spawn`, `team_send`, `team_status`, `team_watch_pr`, `team_unwatch_pr`, `team_destroy` tools and a teammate `send_message` tool
 - Agents:
   - `ticket-jira-analyst` — reads/summarizes Jira tickets
   - `ticket-scout` — investigates relevant code/tests/commands
@@ -133,13 +133,17 @@ ls ~/.pi/agent/agents/ticket-planner.md
 ls ~/.pi/agent/skills/ticket-workflow/SKILL.md
 ```
 
-If the `team_create` tool is unavailable, verify the team-tmux extension links:
+If the `team_create` tool is unavailable, verify the `pi-team-tmux` package and team skill:
 
 ```sh
-ls ~/.pi/agent/extensions/team-tmux/index.ts
-ls ~/.pi/agent/extensions/team-tmux/teammate.ts
-ls ~/.pi/agent/extensions/team-tmux/ipc.ts
+pi list
 ls ~/.pi/agent/skills/team-ticket/SKILL.md
 ```
 
-The team-tmux extension also requires `tmux` 3.2+ and the `gh` CLI (the latter is only needed for `team_watch_pr`).
+If the package is missing, run the dotfiles installer or install it manually:
+
+```sh
+pi install git:github.com/peterg17/pi-teams-tmux
+```
+
+The `pi-team-tmux` package also requires `tmux` 3.2+ and the `gh` CLI (the latter is only needed for `team_watch_pr`).
