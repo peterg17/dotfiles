@@ -612,7 +612,7 @@ function createTicketMarkdown(params: any, rel: string): string {
 	md += "## Context\n\n";
 	if (params.project) md += `Project: ${params.project}\n\n`;
 	if (params.repo) md += `Repo: \`${params.repo}\`\n\n`;
-	md += "## Agent Instructions\n\nUse `/skill:obsidian-ticket-team` on this note when ready to spawn a visual tmux team.\n\n";
+	md += "## Agent Instructions\n\nUse `/skill:team-ticket` or ask Pi to spawn a visual tmux team for this ticket when ready.\n\n";
 	md += `## Work Log\n\n- ${timestamp()} — Created ticket.\n\n`;
 	md += "## PR\n";
 	return md;
@@ -742,6 +742,7 @@ export default function (pi: ExtensionAPI) {
 			if (!title) return;
 			const desc = await ctx.ui.input("Description", "Short problem/goal description (optional)");
 			const folder = configuredTicketDir();
+			includeRuntimeScanDir(folder);
 			fs.mkdirSync(vaultPath(folder), { recursive: true });
 			const rel = uniquePath(folder, title);
 			fs.writeFileSync(vaultPath(rel), createTicketMarkdown({ title, description: desc }, rel), "utf-8");
