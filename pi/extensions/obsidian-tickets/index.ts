@@ -326,7 +326,9 @@ function appendWorkLog(content: string, entry: string): string {
 	const line = `- ${timestamp()} — ${entry.trim()}`;
 	const match = content.match(/^##\s+Work Log\s*$/m);
 	if (!match || match.index === undefined) return content.trimEnd() + `\n\n## Work Log\n\n${line}\n`;
-	const insertAt = content.indexOf("\n", match.index) + 1;
+	const headingEnd = content.indexOf("\n", match.index);
+	if (headingEnd === -1) return content.trimEnd() + `\n\n${line}\n`;
+	const insertAt = headingEnd + 1;
 	return content.slice(0, insertAt) + `\n${line}\n` + content.slice(insertAt).replace(/^\n?/, "");
 }
 
@@ -612,7 +614,7 @@ function createTicketMarkdown(params: any, rel: string): string {
 	md += "## Context\n\n";
 	if (params.project) md += `Project: ${params.project}\n\n`;
 	if (params.repo) md += `Repo: \`${params.repo}\`\n\n`;
-	md += "## Agent Instructions\n\nUse `/skill:team-ticket` or ask Pi to spawn a visual tmux team for this ticket when ready.\n\n";
+	md += "## Agent Instructions\n\nUse `/skill:obsidian-ticket-team` or ask Pi to spawn a visual tmux team for this Obsidian ticket when ready.\n\n";
 	md += `## Work Log\n\n- ${timestamp()} — Created ticket.\n\n`;
 	md += "## PR\n";
 	return md;
