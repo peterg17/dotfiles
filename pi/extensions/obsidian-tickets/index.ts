@@ -197,6 +197,7 @@ function yamlScalar(value: string | undefined): string {
 	const scalar = value ?? "";
 	if (!scalar) return '""';
 	if (/^(true|false|null|yes|no|on|off)$/i.test(scalar)) return JSON.stringify(scalar);
+	if (scalar.includes(": ") || scalar.includes(" #") || /^[\s!&*?[\]{}>,|%@`-]/.test(scalar)) return JSON.stringify(scalar);
 	if (/^[a-zA-Z0-9_./:@ -]+$/.test(scalar)) return scalar;
 	return JSON.stringify(scalar);
 }
@@ -589,7 +590,7 @@ function createTicketMarkdown(params: any, rel: string): string {
 		created: today(),
 		updated: today(),
 		repo: params.repo || "",
-		branch: params.branch || `feature/${slug(params.title)}`,
+		branch: typeof params.branch === "string" && params.branch.trim() ? params.branch.trim() : `feature/${slug(params.title)}`,
 		pr: "",
 		tags: normalizeTags(["project/active"], params.status || "todo"),
 	};
