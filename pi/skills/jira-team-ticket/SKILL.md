@@ -1,38 +1,39 @@
 ---
-name: team-ticket
-description: 'Spawn a visual agent team in tmux to ship one or more tickets end-to-end: one implementer per ticket, shared reviewer and tester, each in their own tmux pane with live inter-agent messaging and automatic PR review polling. Pi equivalent of Claude Code agent teams. Trigger phrases: "spawn a team for JIRA-123", "tackle this ticket with a team", "team up on this ticket", "ship this with a visual team", "fire up a team", "launch a team for these tickets", "tackle JIRA-123 and JIRA-456 in parallel with a team".'
+name: jira-team-ticket
+description: 'Spawn a visual agent team in tmux to ship one or more **Jira tickets** end-to-end: one implementer per ticket, shared reviewer and tester, each in their own tmux pane with live inter-agent messaging and automatic PR review polling. Pi equivalent of Claude Code agent teams. **Strictly assumes Jira tickets.** Trigger phrases: "spawn a team for JIRA-123", "team up on JIRA-456 JIRA-789 in parallel", "launch a team for these Jira tickets".'
 ---
 
-# Team-Ticket Workflow (tmux visual teams)
+# Jira-Team Workflow (tmux visual teams)
 
-Ship one or more tickets end-to-end using a visual agent team in tmux. Each agent runs in its own tmux pane with full interactive UI, communicating via the `send_message` tool.
+Ship one or more **Jira tickets** end-to-end using a visual agent team in tmux. Each agent runs in its own tmux pane with full interactive UI, communicating via the `send_message` tool.
 
-Supports **1–5 tickets**. Each ticket gets its own implementer in its own git worktree. A single shared reviewer and tester gate all of them. After PRs are opened, `team_watch_pr` polls for review comments — auto-dispatching Codex feedback to the implementer and surfacing human comments to the team-lead.
+Supports **1–5 Jira tickets**. Each ticket gets its own implementer in its own git worktree. A single shared reviewer and tester gate all of them. After PRs are opened, `team_watch_pr` polls for review comments — auto-dispatching Codex feedback to the implementer and surfacing human comments to the team-lead.
 
 ## How to trigger
 
-- `/skill:team-ticket PROJ-12345`
-- `/skill:team-ticket PROJ-12345 PROJ-12346 PROJ-12347`
-- "spawn a team for PROJ-12345"
-- "tackle PROJ-12345 and PROJ-12346 with a visual team"
-- "team up on these tickets"
+- `/skill:jira-team-ticket JIRA-12345`
+- `/skill:jira-team-ticket JIRA-12345 JIRA-12346 JIRA-12347`
+- "spawn a team for JIRA-12345"
+- "tackle JIRA-12345 and JIRA-12346 with a visual team"
+- "team up on these Jira tickets"
 
-The `ticket-workflow` skill will also offer team mode when it detects the `team_create` tool is available.
+The `jira-ticket-workflow` skill will also offer team mode when it detects the `team_create` tool is available.
 
 ## When to use
 
-- The user gives you 1–5 tickets and wants coordinated agents with visual progress.
+- The user explicitly provides **Jira ticket keys** and wants coordinated agents with visual progress.
+- **Strictly assumes Jira tickets.** Do not use with GitHub Issues, Linear, or other trackers.
 - The repo has a default branch and a way to run tests.
 - The tickets are reasonably independent (no overlapping file conflicts).
 
 **When NOT to use:**
 - One-line fixes or doc tweaks — just edit inline.
 - More than 5 tickets — push back, batch the rest separately.
-- When the user explicitly wants headless/fast execution — use `ticket-workflow` in subagent mode.
+- When the user explicitly wants headless/fast execution — use `jira-ticket-workflow` in subagent mode.
 
 ## Prerequisites
 
-The `team-tmux` extension must be loaded. Verify that `team_create` tool is available. If not, fall back to `ticket-workflow` subagent mode.
+The `team-tmux` extension must be loaded. Verify that `team_create` tool is available. If not, inform the user that `jira-ticket-workflow` in subagent mode is the alternative.
 
 ## Step 1 — Gather context
 
@@ -40,8 +41,8 @@ Auto-detect from the project; ask only when detection fails.
 
 | Input | How to detect | Fallback |
 |---|---|---|
-| **Tickets** | Provided by user | Required |
-| **Ticket details** | `jira issue view <KEY> --plain` or `gh issue view` for each | Required |
+| **Tickets** | Provided by user (must be Jira format, e.g., `JIRA-123`) | Required |
+| **Ticket details** | `jira issue view <KEY> --plain` for each | **Cannot proceed without `jira` CLI** |
 | **Repo root** | `git rev-parse --show-toplevel` | Ask |
 | **Base branch** | AGENTS.md "Main branch" or `git symbolic-ref refs/remotes/origin/HEAD` or `prod` | Ask |
 | **Worktree root** | Convention or ask | Ask |
@@ -56,7 +57,7 @@ Read AGENTS.md / CLAUDE.md once and pass relevant excerpts into all agent tasks.
 Refuse to proceed if:
 1. Uncommitted changes in the source clone would be picked up by worktree creation.
 2. The worktree root doesn't exist or isn't writable.
-3. A ticket has no clear scope (empty description / too vague). Clarify first.
+3. The provided ticket is not a valid Jira key. Ask the user to clarify.
 4. More than 5 tickets. Ask to batch.
 
 ## Step 3 — Create worktrees
@@ -75,8 +76,8 @@ git worktree add -b <prefix>/<TICKET>-<kebab-desc> <worktree-root>/<repo>-<TICKE
 ## Step 4 — Create the team
 
 ```
-team_create { name: "ticket-<TICKET-KEY>" }          // single ticket
-team_create { name: "tickets-<short-suffix>" }        // multiple tickets
+team_create { name: "jira-ticket-<TICKET-KEY>" }          // single ticket
+team_create { name: "jira-tickets-<short-suffix>" }        // multiple tickets
 ```
 
 This opens a tmux window where agent panes will appear.
@@ -111,7 +112,7 @@ For each ticket, spawn an implementer:
 team_spawn {
   name: "impl-<KEY>",
   agent: "ticket-implementer",
-  task: "You are the implementer for ticket <KEY>: <title>.\n\nTeammates: team-lead, reviewer, tester<, other impl agents if multi-ticket>\nWorktree: <path>\nBranch: <branch>\nBase: origin/<base>\n\nStrict workflow:\n1. cd into the worktree.\n2. Read AGENTS.md for conventions.\n3. Investigate the relevant code before editing.\n4. Implement the minimal fix. Run formatter.\n5. Plan tests.\n6. Code review loop: send_message reviewer with worktree path + summary. Loop until APPROVED.\n7. Test loop: send_message tester with worktree path + exact test command. Loop until PASS.\n8. Commit + push + draft PR (only after APPROVED + PASS):\n   - Stage specific files, never `git add -A`\n   - Conventional Commits + Co-Authored-By footer\n   - Never --no-gpg-sign, --no-verify, --amend, or force-push\n   - First push: `git push -u origin <branch>`\n   - `gh pr create --draft --title '[<KEY>]: <desc>'`\n   - Post `@codex review` as PR comment\n9. Report PR URL to team-lead via send_message.\n\nPause-and-ask: if scope balloons, send_message team-lead before proceeding.\n\nTicket details:\n<full ticket body>"
+  task: "You are the implementer for Jira ticket <KEY>: <title>.\n\nTeammates: team-lead, reviewer, tester<, other impl agents if multi-ticket>\nWorktree: <path>\nBranch: <branch>\nBase: origin/<base>\n\nStrict workflow:\n1. cd into the worktree.\n2. Read AGENTS.md for conventions.\n3. Investigate the relevant code before editing.\n4. Implement the minimal fix. Run formatter.\n5. Plan tests.\n6. Code review loop: send_message reviewer with worktree path + summary. Loop until APPROVED.\n7. Test loop: send_message tester with worktree path + exact test command. Loop until PASS.\n8. Commit + push + draft PR (only after APPROVED + PASS):\n   - Stage specific files, never `git add -A`\n   - Conventional Commits + Co-Authored-By footer\n   - Never --no-gpg-sign, --no-verify, --amend, or force-push\n   - First push: `git push -u origin <branch>`\n   - `gh pr create --draft --title '[<KEY>]: <desc>'`\n   - Post `@codex review` as PR comment\n9. Report PR URL to team-lead via send_message.\n\nPause-and-ask: if scope balloons, send_message team-lead before proceeding.\n\nTicket details:\n<full ticket body>"
 }
 ```
 
@@ -162,6 +163,7 @@ When all implementers have reported PR URLs:
 
 ## Anti-patterns
 
+- **Don't** use this skill with non-Jira tickets (e.g., `PROJ-1234`, `GH-567`).
 - **Don't** skip the reviewer/tester — the quality gate is the point.
 - **Don't** send the initial task AND a duplicate team_send — team_spawn handles the first prompt.
 - **Don't** destroy the team while agents are still working.
