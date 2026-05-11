@@ -4,18 +4,19 @@ This directory contains dotfiles-managed configuration for [`pi`](https://pi.dev
 
 ## Ticket teammate workflow
 
-The ticket workflow is a pi adaptation of the Claude `parallel-tickets` workflow. It uses the `subagent` extension (or the `team-tmux` extension for visual teams) plus specialized teammate agents to handle technical Jira work end-to-end.
+The ticket workflow is a pi adaptation of the Claude `parallel-tickets` workflow. It uses the `subagent` extension (or the `team-tmux` extension for visual teams) plus specialized teammate agents to handle technical ticket work end-to-end.
 
 Two execution modes:
 
 - **Subagent mode** (headless) — the `ticket-workflow` skill runs sub-pi processes in chains/parallel and returns results inline.
-- **Visual team mode** (tmux) — the `team-ticket` skill spawns labeled tmux panes for each agent (reviewer, tester, implementer-per-ticket) with inter-agent messaging and PR-comment polling. Pi equivalent of [Claude Code Agent Teams](https://code.claude.com/docs/en/agent-teams).
+- **Visual team mode** (tmux) — the `team-ticket` and `obsidian-ticket-team` skills spawn labeled tmux panes for each agent (reviewer, tester, implementer-per-ticket) with inter-agent messaging and PR-comment polling. Pi equivalent of [Claude Code Agent Teams](https://code.claude.com/docs/en/agent-teams).
 
 ### Installed resources
 
 - Skills:
   - `pi/skills/ticket-workflow/SKILL.md` — headless subagent orchestration
-  - `pi/skills/team-ticket/SKILL.md` — visual tmux team orchestration (1–5 tickets, shared reviewer/tester, PR comment polling)
+  - `pi/skills/team-ticket/SKILL.md` — visual tmux team orchestration for Jira/GitHub-style tickets (1–5 tickets, shared reviewer/tester, PR comment polling)
+  - `pi/skills/obsidian-ticket-team/SKILL.md` — visual tmux team orchestration for Obsidian Markdown ticket notes
 - Extensions/packages:
   - `pi/extensions/subagent/` — spawn isolated sub-pi processes for chained / parallel work
   - `pi/extensions/obsidian-tickets/` — create/update Obsidian ticket notes and generate a Dataview-first Agentic Tasks dashboard with Markdown fallback
@@ -91,6 +92,14 @@ Multiple tickets in parallel with a visual team:
 /skill:team-ticket PROJ-123 PROJ-456 PROJ-789
 ```
 
+Spawn a visual team from an Obsidian ticket note:
+
+```text
+/skill:obsidian-ticket-team [[My Obsidian Ticket]]
+```
+
+Generated Obsidian tickets include this instruction under `## Agent Instructions`.
+
 ### Commit / PR behavior
 
 The workflow will not commit, push, or create PRs unless you explicitly ask, e.g.:
@@ -109,12 +118,14 @@ When creating PRs, the workflow is instructed to:
 
 ### Jira workflow bias
 
-This workflow is intentionally biased toward Peter's typical Jira-based workflow:
+The `ticket-workflow` and `team-ticket` skills are intentionally biased toward Peter's typical Jira-based workflow:
 
 - uses `jira issue view <KEY> --plain` when possible
 - respects AGENTS.md/CLAUDE.md for repo conventions
 - assumes Java/Gradle/Spotless conventions when applicable
 - delegates project-specific ticket creation to any installed per-project ticket-creation skill
+
+Use `obsidian-ticket-team` when the work item is an Obsidian Markdown ticket note instead of a Jira/GitHub-style ticket key.
 
 ### Troubleshooting
 
@@ -147,11 +158,12 @@ Recommended setup:
 
 Kanban plugin sync is deferred; use the generated Dataview dashboard as the canonical board view for now.
 
-If the `team_create` tool is unavailable, verify the `pi-team-tmux` package and team skill:
+If the `team_create` tool is unavailable, verify the `pi-team-tmux` package and team skills:
 
 ```sh
 pi list
 ls ~/.pi/agent/skills/team-ticket/SKILL.md
+ls ~/.pi/agent/skills/obsidian-ticket-team/SKILL.md
 ```
 
 If the package is missing, run the dotfiles installer or install it manually:
