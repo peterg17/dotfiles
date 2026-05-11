@@ -185,3 +185,4 @@ At the end of any workflow, provide:
 - **Don't** auto-fix human PR review comments by default; surface them to the user.
 - **Don't** create many worktrees/branches without checking repo cleanliness and base branch.
 - **Don't** let subagents write persistent planning files unless the user asked.
+Updated trigger docs for Jira ticket keys
