@@ -17,6 +17,8 @@
     - ~/.pi/agent/skills/team-ticket
     - ~/.pi/agent/skills/obsidian-ticket-team
 
+- clean: ['~/.claude/skills']
+
 - link:
     ~/.zshrc:
       path: .zshrc
