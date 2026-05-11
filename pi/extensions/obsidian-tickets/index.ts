@@ -291,6 +291,10 @@ function titleFromContent(content: string, fallback: string): string {
 	return h1?.[1]?.trim() || fallback;
 }
 
+function isYamlContinuationLine(line: string): boolean {
+	return /^\s+/.test(line) || /^-\s+/.test(line);
+}
+
 function preservedFrontmatterLines(content: string): string[] {
 	const block = parseFrontmatterBlock(content);
 	if (!block) return [];
@@ -299,7 +303,7 @@ function preservedFrontmatterLines(content: string): string[] {
 	for (let i = 0; i < lines.length; i++) {
 		const match = lines[i].match(/^([A-Za-z0-9_-]+):/);
 		if (match && FRONTMATTER_KEYS.has(match[1])) {
-			while (i + 1 < lines.length && /^\s+/.test(lines[i + 1])) i++;
+			while (i + 1 < lines.length && isYamlContinuationLine(lines[i + 1])) i++;
 			continue;
 		}
 		if (lines[i].trim()) preserved.push(lines[i]);
