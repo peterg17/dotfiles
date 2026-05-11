@@ -13,8 +13,8 @@
     - ~/.pi/agent/extensions
     - ~/.pi/agent/extensions/subagent
     - ~/.pi/agent/extensions/obsidian-tickets
-    - ~/.pi/agent/skills/ticket-workflow
-    - ~/.pi/agent/skills/team-ticket
+    - ~/.pi/agent/skills/jira-ticket-workflow
+    - ~/.pi/agent/skills/jira-team-ticket
     - ~/.pi/agent/skills/obsidian-ticket-team
 
 - link:
@@ -31,8 +31,8 @@
     ~/.claude/skills/single-ticket-team: claude/skills/single-ticket-team
     ~/.claude/skills/obsidian-inbox-cleanup: agents/skills/obsidian-inbox-cleanup
     ~/.agents/skills/obsidian-inbox-cleanup: agents/skills/obsidian-inbox-cleanup
-    ~/.pi/agent/skills/ticket-workflow/SKILL.md: pi/skills/ticket-workflow/SKILL.md
-    ~/.pi/agent/skills/team-ticket/SKILL.md: pi/skills/team-ticket/SKILL.md
+    ~/.pi/agent/skills/jira-ticket-workflow/SKILL.md: pi/skills/jira-ticket-workflow/SKILL.md
+    ~/.pi/agent/skills/jira-team-ticket/SKILL.md: pi/skills/jira-team-ticket/SKILL.md
     ~/.pi/agent/skills/obsidian-ticket-team/SKILL.md:
       path: pi/skills/obsidian-ticket-team/SKILL.md
       force: true
