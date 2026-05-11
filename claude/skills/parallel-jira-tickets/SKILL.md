@@ -1,19 +1,19 @@
 ---
-name: parallel-tickets
-description: 'Use when the user asks you to tackle multiple tickets/issues/PRs in parallel and wants them shipped as separate draft PRs. Spawns a Claude team — one implementer per ticket in its own git worktree, plus shared reviewer and tester teammates — runs each through implement → review-loop → test-loop → commit → draft PR → request AI review, and sets up a recurring cron to poll PRs for review feedback. Trigger phrases: "tackle these tickets", "work on JIRA-123 and JIRA-456 in parallel", "spawn a team for these issues", "batch these PRs", "team up on this list".'
+name: parallel-jira-tickets
+description: 'Use when the user asks you to tackle multiple Jira tickets in parallel and wants them shipped as separate draft PRs. Spawns a Claude team — one implementer per ticket in its own git worktree, plus shared reviewer and tester teammates — runs each through implement → review-loop → test-loop → commit → draft PR → request AI review, and sets up a recurring cron to poll PRs for review feedback. Trigger phrases: "tackle these Jira tickets", "work on JIRA-123 and JIRA-456 in parallel", "spawn a team for these Jira issues", "batch these tickets", "team up on this Jira list".'
 ---
 
-# Parallel-Tickets Team Workflow
+# Parallel-Jira-Tickets Team Workflow
 
-A reusable team setup for shipping multiple independent tickets in one session: one implementer per ticket (each in its own git worktree off the base branch), plus a shared reviewer and a shared tester, plus a recurring cron that polls each PR for review feedback.
+A reusable team setup for shipping multiple independent Jira tickets in one session: one implementer per ticket (each in its own git worktree off the base branch), plus a shared reviewer and a shared tester, plus a recurring cron that polls each PR for review feedback.
 
 ## When to use
 
-- The user gives you ≥ 2 tickets / issue URLs / bug descriptions and wants them addressed in parallel.
+- The user gives you ≥ 2 Jira tickets / Jira URLs / bug descriptions and wants them addressed in parallel.
 - The tickets are reasonably independent (no shared file conflicts expected).
 - The repo has a sensible default branch (`prod`, `main`, `master`) and a way to run tests.
 
-If the user gives you **one** ticket, don't use this skill — just work directly. If they give you **more than ~5**, push back: spawning that many concurrent agents creates coordination overhead that outweighs the parallelism.
+If the user gives you **one** Jira ticket, use `single-jira-ticket-team` instead. If they give you **more than ~5**, push back: spawning that many concurrent agents creates coordination overhead that outweighs the parallelism.
 
 ## Required tools
 
@@ -23,7 +23,7 @@ This skill uses tools that are *deferred* in many sessions. **Load them up front
 ToolSearch query: "select:TeamCreate,Agent,SendMessage,TaskCreate,TaskUpdate,TaskList,CronCreate,AskUserQuestion"
 ```
 
-If your session also needs Jira/GitHub/Linear lookups for ticket bodies, add those to the same search.
+If your session also needs Jira CLI tools (e.g. `jira issue view`) loaded, add those to the same search.
 
 ## Step 1 — Gather inputs
 
@@ -31,8 +31,8 @@ You need these before spawning anything. Auto-detect from the project where you 
 
 | Input | How to detect | Fallback ask |
 |---|---|---|
-| **Ticket list** | Provided by the user | Required — refuse if missing |
-| **Ticket details** | Fetch each via `jira issue view <KEY> --plain`, `gh issue view <#>`, or `gh api`. Read enough to know each ticket's actual scope. | Required |
+| **Jira ticket list** | Provided by the user (e.g. `JIRA-123`, `JIRA-456`) | Required — refuse if missing |
+| **Ticket details** | Fetch each via `jira issue view <KEY> --plain`. Read enough to know each ticket's actual scope. | Required |
 | **Repo root** | `git rev-parse --show-toplevel` from current cwd | Ask which repo if you're outside one |
 | **Base branch** | Read project CLAUDE.md ("Main branch:", "Default branch:"); else `git symbolic-ref refs/remotes/origin/HEAD`; else `prod`/`main` heuristic | Ask if ambiguous |
 | **Worktree root** | Project CLAUDE.md memory or convention; the user's worktree-collection directory if one exists | Ask via `AskUserQuestion` with detected siblings as options |
@@ -50,7 +50,7 @@ Refuse to proceed if any of:
 1. The source clone has uncommitted changes that would be picked up by worktree creation. (`git status -s` non-empty in critical files; ignore obvious untracked-but-fine cases.)
 2. The worktree root doesn't exist or isn't writable.
 3. A ticket has no clear actionable scope (description is empty / too vague). Better to ask the user to clarify than to spawn an implementer that flounders.
-4. More than ~5 tickets were requested. Ask the user to batch the rest separately.
+4. More than ~5 Jira tickets were requested. Ask the user to batch the rest separately.
 
 ## Step 3 — Create worktrees
 

@@ -202,8 +202,8 @@ Currently shipped:
 - Shared:
   - **`obsidian-inbox-cleanup`** — processes the Obsidian vault `Index.md` capture inbox, files links/ideas into notes, updates MOCs, and verifies unresolved links.
 - Claude-only:
-  - **`parallel-tickets`** — spawn a Claude team to tackle multiple tickets in parallel (one implementer per ticket in its own worktree, plus shared reviewer + tester, plus an hourly PR-comment polling cron).
-  - **`single-ticket-team`** — single-ticket counterpart to `parallel-tickets`. Spawns a backgrounded team (one implementer in a worktree + shared reviewer + tester + PR-comment cron) for one non-trivial ticket while the user keeps working in the main session.
+  - **`parallel-jira-tickets`** — spawn a Claude team to tackle multiple Jira tickets in parallel (one implementer per ticket in its own worktree, plus shared reviewer + tester, plus an hourly PR-comment polling cron).
+  - **`single-jira-ticket-team`** — single-ticket counterpart to `parallel-jira-tickets`. Spawns a backgrounded team (one implementer in a worktree + shared reviewer + tester + PR-comment cron) for one non-trivial Jira ticket while the user keeps working in the main session.
 - Pi-only: see `pi/README.md` for `ticket-workflow`, `team-ticket`, and `obsidian-ticket-team`.
 
 To add a portable shared skill, put it under `agents/skills/<name>/SKILL.md` and add matching `~/.agents/skills/<name>` and `~/.claude/skills/<name>` links to `install.conf.yaml`. To add a runtime-specific skill, use `claude/skills` or `pi/skills` and install it only into that runtime's native skill directory.
