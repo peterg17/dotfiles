@@ -158,6 +158,8 @@ Recommended setup:
 
 Kanban plugin sync is deferred; use the generated Dataview dashboard as the canonical board view for now.
 
+When tickets are created in folders outside `OBSIDIAN_TICKETS_SCAN_DIRS`, the extension records those additional scan roots in the generated dashboard frontmatter (`ticket-scan-dirs`) so they remain tracked after `/reload` or a pi restart.
+
 If the `team_create` tool is unavailable, verify the `pi-team-tmux` package and team skills:
 
 ```sh
