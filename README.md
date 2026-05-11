@@ -182,30 +182,31 @@ To get "Claude requires your input" notifications forwarded to iTerm2 on your Ma
 
 Notifications travel over the existing SSH session as an iTerm2 escape sequence — no tunnels or third-party services needed.
 
-## Claude Code skills
+## Agent skills layout
 
-Portable skills live under `claude/skills/<name>/SKILL.md` and are symlinked into `~/.claude/skills/<name>` on install. Per-skill (not whole-dir) so plugin-shipped or host-only skills are left alone.
+Skills are split by runtime so Claude Code and pi can coexist without loading each other's tool-specific workflows:
 
-- **New machine** (`./install`): dotbot creates the symlinks via `install.conf.yaml`.
-- **Remote box** (`setup-remote.sh`): the same script symlinks every skill in `claude/skills/`.
+- **Shared Agent Skills:** `agents/skills/<name>/SKILL.md`
+  - installed into `~/.agents/skills/<name>` for Agent Skills compatible tools
+  - installed into `~/.claude/skills/<name>` for Claude Code
+  - discovered by pi from `~/.agents/skills` by default, so shared skills are **not** also linked into `~/.pi/agent/skills`
+- **Claude-only skills:** `claude/skills/<name>/SKILL.md`, installed only into `~/.claude/skills/<name>`
+- **Pi-only skills:** `pi/skills/<name>/SKILL.md`, installed only into `~/.pi/agent/skills/<name>`
 
-To add a new portable skill: drop it under `claude/skills/<name>/SKILL.md` and add a matching `~/.claude/skills/<name>: claude/skills/<name>` line to `install.conf.yaml`. Remote machines pick it up automatically on the next `setup-remote.sh` run.
+The installer links skills per-name rather than replacing whole skill directories, so plugin-shipped or host-only skills with other names are left alone. Keep skill names unique across the three source trees; if a workflow needs different tool APIs in Claude and pi, give each runtime-specific version a distinct name.
 
-Currently shipped:
-- **`parallel-tickets`** — spawn a Claude team to tackle multiple tickets in parallel (one implementer per ticket in its own worktree, plus shared reviewer + tester, plus an hourly PR-comment polling cron).
-- **`single-ticket-team`** — single-ticket counterpart to `parallel-tickets`. Spawns a backgrounded team (one implementer in a worktree + shared reviewer + tester + PR-comment cron) for one non-trivial ticket while the user keeps working in the main session.
-
-## Pi / shared agent skills
-
-Portable cross-agent skills live under `agents/skills/<name>/SKILL.md` and are symlinked into:
-
-- `~/.pi/agent/skills/<name>` for pi
-- `~/.agents/skills/<name>` for Agent Skills compatible tools
-- `~/.claude/skills/<name>` for Claude
+Pi settings intentionally do not import `~/.claude/skills`; any shared skill should live in `agents/skills` instead. The pi settings merge removes the old dotfiles-managed `~/.claude/skills` import to prevent duplicate or Claude-only skills from appearing in pi.
 
 Currently shipped:
 
-- **`obsidian-inbox-cleanup`** — processes the Obsidian vault `Index.md` capture inbox, files links/ideas into notes, updates MOCs, and verifies unresolved links.
+- Shared:
+  - **`obsidian-inbox-cleanup`** — processes the Obsidian vault `Index.md` capture inbox, files links/ideas into notes, updates MOCs, and verifies unresolved links.
+- Claude-only:
+  - **`parallel-tickets`** — spawn a Claude team to tackle multiple tickets in parallel (one implementer per ticket in its own worktree, plus shared reviewer + tester, plus an hourly PR-comment polling cron).
+  - **`single-ticket-team`** — single-ticket counterpart to `parallel-tickets`. Spawns a backgrounded team (one implementer in a worktree + shared reviewer + tester + PR-comment cron) for one non-trivial ticket while the user keeps working in the main session.
+- Pi-only: see `pi/README.md` for `ticket-workflow`, `team-ticket`, and `obsidian-ticket-team`.
+
+To add a portable shared skill, put it under `agents/skills/<name>/SKILL.md` and add matching `~/.agents/skills/<name>` and `~/.claude/skills/<name>` links to `install.conf.yaml`. To add a runtime-specific skill, use `claude/skills` or `pi/skills` and install it only into that runtime's native skill directory.
 
 ## Obsidian daily inbox cleanup
 

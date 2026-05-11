@@ -14,6 +14,31 @@ import shutil
 import sys
 
 
+LEGACY_SKILL_PATHS_TO_REMOVE = {"~/.claude/skills"}
+
+
+def normalized_path(value):
+    return os.path.normpath(os.path.expanduser(os.path.expandvars(value)))
+
+
+def prune_legacy_skill_paths(settings):
+    skills = settings.get("skills")
+    if not isinstance(skills, list):
+        return settings
+
+    legacy = {normalized_path(path) for path in LEGACY_SKILL_PATHS_TO_REMOVE}
+    filtered = [
+        skill
+        for skill in skills
+        if not (isinstance(skill, str) and normalized_path(skill) in legacy)
+    ]
+    if filtered:
+        settings["skills"] = filtered
+    else:
+        settings.pop("skills", None)
+    return settings
+
+
 def deep_merge(base, override):
     result = base.copy()
     for k, v in override.items():
@@ -46,6 +71,7 @@ def main():
     with open(override_path) as f:
         override = json.load(f)
 
+    base = prune_legacy_skill_paths(base)
     merged = deep_merge(base, override)
 
     with open(base_path, "w") as f:

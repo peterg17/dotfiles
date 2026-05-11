@@ -31,7 +31,6 @@
     ~/.claude/skills/single-ticket-team: claude/skills/single-ticket-team
     ~/.claude/skills/obsidian-inbox-cleanup: agents/skills/obsidian-inbox-cleanup
     ~/.agents/skills/obsidian-inbox-cleanup: agents/skills/obsidian-inbox-cleanup
-    ~/.pi/agent/skills/obsidian-inbox-cleanup: agents/skills/obsidian-inbox-cleanup
     ~/.pi/agent/skills/ticket-workflow/SKILL.md: pi/skills/ticket-workflow/SKILL.md
     ~/.pi/agent/skills/team-ticket/SKILL.md: pi/skills/team-ticket/SKILL.md
     ~/.pi/agent/skills/obsidian-ticket-team/SKILL.md:
@@ -71,6 +70,8 @@
       description: Merge public Claude settings into ~/.claude/settings.json (bootstraps on fresh install, preserves extra keys like DD plugins on re-install)
     - command: "python3 \"$PWD/pi/merge-settings.py\" \"$PWD/pi/settings.json\""
       description: Merge public pi settings into ~/.pi/agent/settings.json (preserves state pi writes itself, e.g. lastChangelogVersion)
+    - command: "legacy=\"$HOME/.pi/agent/skills/obsidian-inbox-cleanup\"; expected=\"$PWD/agents/skills/obsidian-inbox-cleanup\"; if [ -L \"$legacy\" ] && [ \"$(readlink \"$legacy\")\" = \"$expected\" ]; then rm \"$legacy\"; echo \"Removed legacy pi-local shared skill symlink: $legacy\"; fi"
+      description: Remove legacy pi-local shared skill symlink; pi discovers shared skills from ~/.agents/skills
     - command: "git config --local user.email 'petergriggs17@gmail.com' && git config --local user.name 'Peter Griggs'"
       description: Pin personal email for the dotfiles repo (overrides any global/local config)
     - command: "git config --global core.editor \"nvr -cc split --remote-wait +'set bufhidden=delete'\""

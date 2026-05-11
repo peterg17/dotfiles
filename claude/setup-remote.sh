@@ -17,12 +17,20 @@ else
   echo "Merged remote settings into $TARGET"
 fi
 
-# Symlink portable skills into ~/.claude/skills/. Per-skill (not whole dir) so
-# host-installed skills (e.g. plugin-shipped) are left alone.
+# Symlink shared and Claude-only skills into ~/.claude/skills/. Per-skill
+# (not whole dir) so host-installed skills (e.g. plugin-shipped) are left alone.
+link_skill_dir() {
+  local source_root="$1"
+  local label="$2"
+  [ -d "$source_root" ] || return 0
+  for skill_dir in "$source_root"/*/; do
+    [ -d "$skill_dir" ] || continue
+    skill_name=$(basename "$skill_dir")
+    ln -sfn "$skill_dir" "$HOME/.claude/skills/$skill_name"
+    echo "Linked $label skill: $skill_name"
+  done
+}
+
 mkdir -p "$HOME/.claude/skills"
-for skill_dir in "$DOTFILES_DIR/claude/skills"/*/; do
-  [ -d "$skill_dir" ] || continue
-  skill_name=$(basename "$skill_dir")
-  ln -sfn "$skill_dir" "$HOME/.claude/skills/$skill_name"
-  echo "Linked skill: $skill_name"
-done
+link_skill_dir "$DOTFILES_DIR/agents/skills" "shared"
+link_skill_dir "$DOTFILES_DIR/claude/skills" "Claude-only"
