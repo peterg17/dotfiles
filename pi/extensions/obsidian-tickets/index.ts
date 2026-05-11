@@ -237,10 +237,9 @@ function renderDashboardFrontmatter(): string {
 }
 
 function parseFrontmatterBlock(content: string): FrontmatterBlock | null {
-	if (!content.startsWith("---\n")) return null;
-	const end = content.indexOf("\n---", 4);
-	if (end === -1) return null;
-	return { raw: content.slice(4, end), body: content.slice(end + 5).replace(/^\n+/, "") };
+	const match = content.match(/^---\r?\n([\s\S]*?)\r?\n---(?:\r?\n|$)/);
+	if (!match) return null;
+	return { raw: match[1], body: content.slice(match[0].length).replace(/^(?:\r?\n)+/, "") };
 }
 
 function parseSimpleFrontmatter(content: string): Record<string, any> {
@@ -248,7 +247,7 @@ function parseSimpleFrontmatter(content: string): Record<string, any> {
 	if (!block) return {};
 	const out: Record<string, any> = {};
 	let currentList: string | null = null;
-	for (const raw of block.raw.split("\n")) {
+	for (const raw of block.raw.split(/\r?\n/)) {
 		const line = raw.trimEnd();
 		const listMatch = line.match(/^\s*-\s+(.+)$/);
 		if (listMatch && currentList) {
@@ -295,7 +294,7 @@ function titleFromContent(content: string, fallback: string): string {
 function preservedFrontmatterLines(content: string): string[] {
 	const block = parseFrontmatterBlock(content);
 	if (!block) return [];
-	const lines = block.raw.split("\n");
+	const lines = block.raw.split(/\r?\n/);
 	const preserved: string[] = [];
 	for (let i = 0; i < lines.length; i++) {
 		const match = lines[i].match(/^([A-Za-z0-9_-]+):/);
