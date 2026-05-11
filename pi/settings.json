@@ -1,7 +1,4 @@
 {
-  "skills": [
-    "~/.claude/skills"
-  ],
   "packages": [
     "git:github.com/peterg17/pi-teams-tmux"
   ]
