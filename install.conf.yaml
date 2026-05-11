@@ -27,8 +27,8 @@
     ~/.config/nvim: nvim
     ~/.ssh/config.d/00-generic: ssh/00-generic
 
-    ~/.claude/skills/parallel-tickets: claude/skills/parallel-tickets
-    ~/.claude/skills/single-ticket-team: claude/skills/single-ticket-team
+    ~/.claude/skills/parallel-jira-tickets: claude/skills/parallel-jira-tickets
+    ~/.claude/skills/single-jira-ticket-team: claude/skills/single-jira-ticket-team
     ~/.claude/skills/obsidian-inbox-cleanup: agents/skills/obsidian-inbox-cleanup
     ~/.agents/skills/obsidian-inbox-cleanup: agents/skills/obsidian-inbox-cleanup
     ~/.pi/agent/skills/ticket-workflow/SKILL.md: pi/skills/ticket-workflow/SKILL.md
