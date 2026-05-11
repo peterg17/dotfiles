@@ -22,5 +22,7 @@
 	allowedSignersFile = ~/.ssh/allowed_signers
 
 # Keep this last so machine-specific overrides (e.g. dotfiles-dd) win.
+# Missing-include is silently ignored by git, so this is safe on machines
+# (e.g. personal laptop) where the override file doesn't exist.
 [include]
-	path = ~/.gitconfig.local
+	path = ~/.gitconfig-datadog
