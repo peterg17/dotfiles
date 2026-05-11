@@ -12,8 +12,10 @@
     - ~/.pi/agent/prompts
     - ~/.pi/agent/extensions
     - ~/.pi/agent/extensions/subagent
+    - ~/.pi/agent/extensions/obsidian-tickets
     - ~/.pi/agent/skills/ticket-workflow
     - ~/.pi/agent/skills/team-ticket
+    - ~/.pi/agent/skills/obsidian-ticket-team
 
 - link:
     ~/.zshrc:
@@ -32,9 +34,15 @@
     ~/.pi/agent/skills/obsidian-inbox-cleanup: agents/skills/obsidian-inbox-cleanup
     ~/.pi/agent/skills/ticket-workflow/SKILL.md: pi/skills/ticket-workflow/SKILL.md
     ~/.pi/agent/skills/team-ticket/SKILL.md: pi/skills/team-ticket/SKILL.md
+    ~/.pi/agent/skills/obsidian-ticket-team/SKILL.md:
+      path: pi/skills/obsidian-ticket-team/SKILL.md
+      force: true
 
     ~/.pi/agent/extensions/subagent/index.ts: pi/extensions/subagent/index.ts
     ~/.pi/agent/extensions/subagent/agents.ts: pi/extensions/subagent/agents.ts
+    ~/.pi/agent/extensions/obsidian-tickets/index.ts:
+      path: pi/extensions/obsidian-tickets/index.ts
+      force: true
 
     ~/.pi/agent/agents/ticket-jira-analyst.md: pi/agents/ticket-jira-analyst.md
     ~/.pi/agent/agents/ticket-scout.md: pi/agents/ticket-scout.md
