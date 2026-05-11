@@ -9,6 +9,7 @@ const DEFAULT_TASK_MOC_PATH = "00 Maps/Agentic Tasks.md";
 const STATUS_ORDER = ["in-progress", "needs-review", "blocked", "todo", "done", "archived"];
 const PRIORITY_ORDER = ["urgent", "high", "medium", "low"];
 const FRONTMATTER_KEYS = new Set(["type", "status", "priority", "project", "created", "updated", "repo", "branch", "pr", "tags"]);
+const runtimeScanDirs = new Set<string>();
 
 type TicketStatus = "todo" | "in-progress" | "needs-review" | "blocked" | "done" | "archived" | string;
 
@@ -64,11 +65,16 @@ function configuredTaskMocPath(): string {
 function configuredScanDirs(): string[] {
 	const raw = process.env.OBSIDIAN_TICKETS_SCAN_DIRS;
 	const dirs = raw ? raw.split(",").map((item) => trimSlashes(item.trim())).filter(Boolean) : [configuredTicketDir()];
-	return Array.from(new Set(dirs));
+	return Array.from(new Set([...dirs, ...runtimeScanDirs]));
 }
 
 function trimSlashes(value: string): string {
 	return value.replace(/^\/+|\/+$/g, "");
+}
+
+function includeRuntimeScanDir(dir: string): void {
+	const normalized = trimSlashes(dir.trim());
+	if (normalized) runtimeScanDirs.add(normalized);
 }
 
 function today(): string {
@@ -640,6 +646,7 @@ export default function (pi: ExtensionAPI) {
 		}),
 		async execute(_id, params) {
 			const folder = trimSlashes(params.folder || (params.project ? `${configuredTicketDir()}/${sanitizeFileName(params.project)}` : configuredTicketDir()));
+			includeRuntimeScanDir(folder);
 			fs.mkdirSync(vaultPath(folder), { recursive: true });
 			const rel = uniquePath(folder, params.title);
 			fs.writeFileSync(vaultPath(rel), createTicketMarkdown(params, rel), "utf-8");
