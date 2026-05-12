@@ -1,28 +1,28 @@
 ---
-name: single-ticket-team
-description: 'Use when the user wants to ship a single non-trivial ticket end-to-end in the background while they keep working in the main session. Spawns a small Claude team — one implementer in a git worktree, plus a shared reviewer and tester — runs it through implement → review-loop → test-loop → commit → draft PR → request AI review, and sets up a recurring cron to poll the PR for review feedback. Trigger phrases: "tackle this ticket in the background", "spawn a team for JIRA-123", "fire-and-forget this issue", "work on this in the background", "background-implement this", "ship this ticket end to end".'
+name: single-jira-ticket-team
+description: 'Use when the user wants to ship a single non-trivial Jira ticket end-to-end in the background while they keep working in the main session. Spawns a small Claude team — one implementer in a git worktree, plus a shared reviewer and tester — runs it through implement → review-loop → test-loop → commit → draft PR → request AI review, and sets up a recurring cron to poll the PR for review feedback. Trigger phrases: "tackle this Jira ticket in the background", "spawn a team for JIRA-123", "fire-and-forget this Jira issue", "work on this Jira ticket in the background", "background-implement this Jira ticket", "ship this Jira ticket end to end".'
 ---
 
-# Single-Ticket Team Workflow
+# Single-Jira-Ticket Team Workflow
 
-A reusable team setup for shipping **one** ticket end-to-end while the user keeps working in the main session: a single implementer in its own git worktree off the base branch, plus a shared reviewer and a shared tester, plus a recurring cron that polls the resulting PR for review feedback.
+A reusable team setup for shipping **one** Jira ticket end-to-end while the user keeps working in the main session: a single implementer in its own git worktree off the base branch, plus a shared reviewer and a shared tester, plus a recurring cron that polls the resulting PR for review feedback.
 
-This is the single-ticket counterpart to `parallel-tickets`. The value isn't parallelism — it's:
+This is the single-ticket counterpart to `parallel-jira-tickets`. The value isn't parallelism — it's:
 - **Backgrounding**: the user can keep using the main session while the team works.
 - **Quality gate**: implementer must get APPROVED from reviewer and PASS from tester before committing — catches scope creep, convention drift, and breakage that an inline single-pass implementation often misses.
 - **Isolation**: the worktree means the user's main repo isn't touched.
 
 ## When to use
 
-- The user gives you **one** ticket / issue URL / bug description and explicitly wants it handled in the background, or describes scope big enough that they don't want to babysit it.
+- The user gives you **one** Jira ticket / Jira URL / bug description and explicitly wants it handled in the background, or describes scope big enough that they don't want to babysit it.
 - The repo has a sensible default branch (`prod`, `main`, `master`) and a way to run tests.
 
 **When not to use:**
 - One-line fixes, doc tweaks, or anything that's faster to do inline than to spool up a team. Just edit the file.
 - Tickets where the user wants to drive the design themselves — the implementer will make autonomous decisions inside the worktree.
-- Ambiguous scope. If the ticket isn't clear, clarify with the user *before* spawning the team — a flailing background agent burns tokens and produces a bad PR.
+- Ambiguous scope. If the Jira ticket isn't clear, clarify with the user *before* spawning the team — a flailing background agent burns tokens and produces a bad PR.
 
-For ≥ 2 tickets, use `parallel-tickets` instead.
+For ≥ 2 Jira tickets, use `parallel-jira-tickets` instead.
 
 ## Required tools
 
@@ -32,7 +32,7 @@ This skill uses tools that are *deferred* in many sessions. **Load them up front
 ToolSearch query: "select:TeamCreate,Agent,SendMessage,TaskCreate,TaskUpdate,TaskList,CronCreate,AskUserQuestion"
 ```
 
-If the session also needs Jira/GitHub/Linear lookups for ticket bodies, add those to the same search.
+If the session also needs Jira CLI tools (e.g. `jira issue view`) loaded, add those to the same search.
 
 ## Step 1 — Gather inputs
 
@@ -40,8 +40,8 @@ Auto-detect from the project where you can; only ask via `AskUserQuestion` when 
 
 | Input | How to detect | Fallback ask |
 |---|---|---|
-| **Ticket** | Provided by the user | Required — refuse if missing |
-| **Ticket details** | Fetch via `jira issue view <KEY> --plain`, `gh issue view <#>`, or `gh api`. Read enough to know actual scope. | Required |
+| **Jira ticket** | Provided by the user (e.g. `JIRA-123`) | Required — refuse if missing |
+| **Ticket details** | Fetch via `jira issue view <KEY> --plain`. Read enough to know actual scope. | Required |
 | **Repo root** | `git rev-parse --show-toplevel` from current cwd | Ask which repo if you're outside one |
 | **Base branch** | Read project CLAUDE.md ("Main branch:", "Default branch:"); else `git symbolic-ref refs/remotes/origin/HEAD`; else `prod`/`main` heuristic | Ask if ambiguous |
 | **Worktree root** | Project CLAUDE.md memory or convention; the user's worktree-collection directory if one exists | Ask via `AskUserQuestion` with detected siblings as options |
@@ -58,7 +58,7 @@ Refuse to proceed if any of:
 
 1. The source clone has uncommitted changes that would be picked up by worktree creation. (`git status -s` non-empty in critical files; ignore obvious untracked-but-fine cases.)
 2. The worktree root doesn't exist or isn't writable.
-3. The ticket has no clear actionable scope (description is empty / too vague). Better to ask the user to clarify than to spawn an implementer that flounders. **This matters more than in `parallel-tickets`** — there's no other ticket to compensate if this one stalls.
+3. The Jira ticket has no clear actionable scope (description is empty / too vague). Better to ask the user to clarify than to spawn an implementer that flounders. **This matters more than in `parallel-jira-tickets`** — there's no other ticket to compensate if this one stalls.
 
 ## Step 3 — Create the worktree
 

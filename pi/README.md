@@ -4,7 +4,7 @@ This directory contains dotfiles-managed configuration for [`pi`](https://pi.dev
 
 ## Ticket teammate workflow
 
-The ticket workflow is a pi adaptation of the Claude `parallel-tickets` workflow. It uses the `subagent` extension (or the `team-tmux` extension for visual teams) plus specialized teammate agents to handle technical ticket work end-to-end.
+The ticket workflow is a pi adaptation of the Claude `parallel-jira-tickets` workflow. It uses the `subagent` extension (or the `team-tmux` extension for visual teams) plus specialized teammate agents to handle technical ticket work end-to-end.
 
 Two execution modes:
 
