@@ -204,7 +204,8 @@ Currently shipped:
 - Claude-only:
   - **`parallel-jira-tickets`** — spawn a Claude team to tackle multiple Jira tickets in parallel (one implementer per ticket in its own worktree, plus shared reviewer + tester, plus an hourly PR-comment polling cron).
   - **`single-jira-ticket-team`** — single-ticket counterpart to `parallel-jira-tickets`. Spawns a backgrounded team (one implementer in a worktree + shared reviewer + tester + PR-comment cron) for one non-trivial Jira ticket while the user keeps working in the main session.
-- Pi-only: see `pi/README.md` for `ticket-workflow`, `team-ticket`, and `obsidian-ticket-team`.
+  - **`obsidian-ticket-claude-team`** — Claude counterpart to the pi `obsidian-ticket-team` skill (distinct name to avoid the cross-runtime collision flagged by AGENTS.md). Spawns a background team for implementation work described by an Obsidian Markdown ticket note (or 2-5 related notes); team lead updates the note's frontmatter and `## Work Log` as the implementer, reviewer, and tester progress.
+- Pi-only: see `pi/README.md` for `jira-ticket-workflow`, `jira-team-ticket`, and `obsidian-ticket-team`.
 
 To add a portable shared skill, put it under `agents/skills/<name>/SKILL.md` and add matching `~/.agents/skills/<name>` and `~/.claude/skills/<name>` links to `install.conf.yaml`. To add a runtime-specific skill, use `claude/skills` or `pi/skills` and install it only into that runtime's native skill directory.
 
