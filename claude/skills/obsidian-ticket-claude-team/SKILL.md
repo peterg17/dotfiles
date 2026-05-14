@@ -1,11 +1,11 @@
 ---
-name: obsidian-ticket-team
-description: 'Use when the user asks you to ship implementation work described by an Obsidian Markdown ticket note (or 2-5 related notes). Spawns a Claude team — one implementer per note in its own git worktree, plus a shared reviewer and a shared tester — runs each through implement → review-loop → test-loop → commit → draft PR → request AI review, updates the note frontmatter and work log as progress arrives, and sets up a recurring cron to poll PRs for review feedback. Trigger phrases: "team up on this Obsidian ticket", "spawn a team for this note", "ship this vault ticket", "work on [[Ticket Title]]", "continue this obsidian-tickets note".'
+name: obsidian-ticket-claude-team
+description: 'Use when the user asks you to ship implementation work described by an Obsidian Markdown ticket note (or 2-5 related notes) via a Claude background team (worktrees + reviewer/tester + cron). Spawns a Claude team — one implementer per note in its own git worktree, plus a shared reviewer and a shared tester — runs each through implement → review-loop → test-loop → commit → draft PR → request AI review, updates the note frontmatter and work log as progress arrives, and sets up a recurring cron to poll PRs for review feedback. Trigger phrases: "team up on this Obsidian ticket", "spawn a Claude team for this note", "ship this vault ticket", "work on [[Ticket Title]]", "continue this obsidian-tickets note in Claude".'
 ---
 
-# Obsidian Ticket Team
+# Obsidian Ticket Claude Team
 
-Claude counterpart to the pi `obsidian-ticket-team` skill. Coordinates implementation work described by Obsidian Markdown ticket notes using Claude-native primitives (`TeamCreate`, `Agent`, `SendMessage`, `CronCreate`).
+Claude counterpart to the pi `obsidian-ticket-team` skill (distinct name to avoid the cross-runtime collision flagged by AGENTS.md). Coordinates implementation work described by Obsidian Markdown ticket notes using Claude-native primitives (`TeamCreate`, `Agent`, `SendMessage`, `CronCreate`); the pi sibling spawns a tmux visual team for the same source of work.
 
 This is the Obsidian-sourced sibling of `single-jira-ticket-team` / `parallel-jira-tickets`: the team setup is the same, but the ticket lives as a Markdown note in a local vault rather than in Jira.
 
@@ -59,8 +59,8 @@ Read the note and extract:
 | **Title** | First `# ` heading or filename | Use filename |
 | **Problem / acceptance criteria** | `## Problem`, `## Acceptance Criteria` sections | Ask the user if absent or empty |
 | **Target repo** | Frontmatter `repo:` field; else current cwd if it's a git repo *and matches the note*; else ask | Required — refuse if no repo can be determined |
-| **Base branch** | Frontmatter `branch:` parent; else project CLAUDE.md ("Main branch:"); else `git symbolic-ref refs/remotes/origin/HEAD`; else `prod`/`main` heuristic | Ask if ambiguous |
-| **Feature branch** | Frontmatter `branch:` field; else derive a short kebab-case branch from the note title | None — generate |
+| **Base branch** | Project CLAUDE.md ("Main branch:"); else `git symbolic-ref refs/remotes/origin/HEAD`; else `prod`/`main` heuristic. **Never** derive this from the note's `branch:` frontmatter — that field is the feature branch, not the base. | Ask if ambiguous |
+| **Feature branch** | Frontmatter `branch:` field (default-set to `feature/<slug>` by the pi `obsidian-tickets` extension); else derive a short kebab-case branch from the note title | None — generate |
 | **Worktree root** | Project CLAUDE.md memory or convention; sibling-of-repo directory the user has used before | Ask via `AskUserQuestion` |
 | **Build/test commands** | Project CLAUDE.md "Common Commands"; else detect (`./gradlew test`, `cargo test`, `pytest`, `npm test`, etc.) | Ask the implementer prompt to figure it out |
 | **PR template** | `.github/pull_request_template.md` | None if absent — agent writes a sensible default |
