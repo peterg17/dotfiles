@@ -32,6 +32,7 @@
     ~/.claude/skills/parallel-jira-tickets: claude/skills/parallel-jira-tickets
     ~/.claude/skills/single-jira-ticket-team: claude/skills/single-jira-ticket-team
     ~/.claude/skills/obsidian-ticket-claude-team: claude/skills/obsidian-ticket-claude-team
+    ~/.claude/skills/obsidian-ticket-create: claude/skills/obsidian-ticket-create
     ~/.claude/skills/obsidian-inbox-cleanup: agents/skills/obsidian-inbox-cleanup
     ~/.agents/skills/obsidian-inbox-cleanup: agents/skills/obsidian-inbox-cleanup
     ~/.pi/agent/skills/jira-ticket-workflow/SKILL.md: pi/skills/jira-ticket-workflow/SKILL.md
