@@ -124,16 +124,37 @@ Notes on the frontmatter:
 - Leave `pr:` empty — it's set later by `obsidian-ticket-claude-team` or `obsidian_ticket_update`.
 - `repo` and `branch` are quoted YAML scalars; quote anything that contains `:` or starts with a number.
 
-## Step 5 — Write the file and report
+## Step 5 — Write the file
 
-Write the file via `Write`. Then tell the user:
+Write the file via `Write`. Do not regenerate the dashboard or Kanban inline — Step 6 delegates that to pi so the output is byte-identical to a pi-side create.
+
+## Step 6 — Refresh the dashboard via pi
+
+Pi's `obsidian_ticket_create` always refreshes the Agentic Tasks dashboard (and the Kanban when it exists) at the end. Mirror that by shelling out to pi:
+
+```bash
+if command -v pi >/dev/null 2>&1; then
+    pi -p "/tickets-rebuild"
+fi
+```
+
+This invokes the same code path pi runs internally, so dashboards stay consistent regardless of whether pi or Claude wrote the ticket. The shell-out is best-effort:
+
+- If `pi` is not on `PATH`, skip silently and tell the user in Step 7 that the dashboard is stale and can be refreshed via the `obsidian-ticket-rebuild` Claude skill.
+- If `pi` exits non-zero, surface the stderr in your report but **do not roll back the ticket file** — the ticket is the source of truth and a failed dashboard refresh is recoverable on the next rebuild.
+
+If the user has a non-default vault, the relevant env vars (`OBSIDIAN_TICKETS_VAULT`, `OBSIDIAN_VAULT_ROOT`, etc.) propagate from the parent shell into pi automatically — no need to re-export them.
+
+## Step 7 — Report
+
+Tell the user:
 
 - absolute path of the new note,
 - vault-relative path,
 - the `[[wikilink]]` form,
-- if applicable: a one-line nudge that the pi dashboard at `00 Maps/Agentic Tasks.md` (or `$OBSIDIAN_TICKETS_DASHBOARD`) **will not auto-refresh** from this skill — the user can refresh it via the `obsidian-ticket-rebuild` Claude skill, or by asking pi to run `obsidian_ticket_rebuild` / `/tickets-rebuild`. It will also refresh next time pi creates/updates any ticket.
+- one of: "dashboard + Kanban refreshed via pi", "pi not installed — run `obsidian-ticket-rebuild` to refresh", or "pi refresh failed: \<error\>".
 
-That's the end of the skill. No commits, no PRs, no Obsidian-side side effects beyond the note write.
+That's the end of the skill. No commits, no PRs.
 
 ## Anti-patterns
 
@@ -141,7 +162,7 @@ That's the end of the skill. No commits, no PRs, no Obsidian-side side effects b
 - **Don't** write outside the resolved vault root.
 - **Don't** invent acceptance criteria when none were given — write the `TODO: define done.` placeholder so the user knows to fill it in.
 - **Don't** call this skill recursively or as part of `obsidian-ticket-claude-team`. The team skill reads existing notes; ticket *creation* is a separate, explicit user action.
-- **Don't** try to refresh the pi `Agentic Tasks.md` dashboard yourself — that logic lives in the pi extension and only pi can run it correctly.
+- **Don't** regenerate the dashboard/Kanban inline in markdown — always delegate to pi via Step 6. The standalone `obsidian-ticket-rebuild` Claude skill exists as a fallback when pi isn't available.
 
 ## Safety rules
 

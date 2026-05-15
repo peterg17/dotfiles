@@ -5,7 +5,7 @@ description: 'Use when the user asks you to change the status of an Obsidian tic
 
 # Update Obsidian Ticket
 
-Claude counterpart to pi's `obsidian_ticket_update` tool. Mutates a single ticket note's frontmatter (status, pr, updated, status/* tag) and optionally appends a `## Work Log` entry and a `## PR` line. Does **not** regenerate the Agentic Tasks dashboard or Kanban board — that is `obsidian-ticket-rebuild` / `obsidian-ticket-kanban-rebuild` on Claude, or `obsidian_ticket_rebuild` / `obsidian_ticket_kanban_rebuild` on pi.
+Claude counterpart to pi's `obsidian_ticket_update` tool. Mutates a single ticket note's frontmatter (status, pr, updated, status/* tag) and optionally appends a `## Work Log` entry and a `## PR` line. After the write, it shells out to `pi -p "/tickets-rebuild"` so the Agentic Tasks dashboard and Kanban stay in sync — matching pi's `obsidian_ticket_update` behavior. If `pi` isn't on `PATH`, the refresh is skipped (best-effort) and the user is told to run `obsidian-ticket-rebuild` manually.
 
 The ticket file remains the source of truth; the dashboards are a generated projection.
 
@@ -20,7 +20,7 @@ The ticket file remains the source of truth; the dashboards are a generated proj
 - User wants to *create* a new ticket — use `obsidian-ticket-create`.
 - User wants to *list* tickets — use `obsidian-ticket-list`.
 - User wants to rewrite the problem description, acceptance criteria, or context — use ordinary `Edit` on the note (those sections are user-authored, not managed by this skill).
-- User wants the rendered dashboard refreshed — chain with `obsidian-ticket-rebuild` after.
+- User wants to refresh dashboards without modifying a ticket — use `obsidian-ticket-rebuild` directly.
 
 ## Required tools
 
@@ -109,21 +109,40 @@ Read the body (everything after the frontmatter):
 
 Do **not** rewrite the `## Problem`, `## Acceptance Criteria`, `## Context`, or `## Agent Instructions` sections — those are user-authored.
 
-## Step 5 — Write and report
+## Step 5 — Write
 
-Write the updated file (`Edit` preferred to keep the diff small; full rewrite via `Write` only if frontmatter restructuring is unavoidable).
+Write the updated file (`Edit` preferred to keep the diff small; full rewrite via `Write` only if frontmatter restructuring is unavoidable). Do not regenerate the dashboard or Kanban inline — Step 6 delegates that to pi.
+
+## Step 6 — Refresh the dashboard via pi
+
+Pi's `obsidian_ticket_update` always refreshes the Agentic Tasks dashboard (and the Kanban when it exists) at the end. Mirror that by shelling out to pi:
+
+```bash
+if command -v pi >/dev/null 2>&1; then
+    pi -p "/tickets-rebuild"
+fi
+```
+
+This invokes the same code path pi runs internally, so dashboards stay consistent regardless of whether pi or Claude updated the ticket. The shell-out is best-effort:
+
+- If `pi` is not on `PATH`, skip silently and tell the user in Step 7 that the dashboard is stale and can be refreshed via the `obsidian-ticket-rebuild` Claude skill.
+- If `pi` exits non-zero, surface the stderr in your report but **do not roll back the ticket update** — the ticket is the source of truth and a failed dashboard refresh is recoverable.
+
+Vault env vars (`OBSIDIAN_TICKETS_VAULT`, `OBSIDIAN_VAULT_ROOT`, etc.) propagate from the parent shell into pi automatically — no need to re-export them.
+
+## Step 7 — Report
 
 Tell the user:
 
 - absolute path of the ticket,
 - vault-relative path,
 - a one-line summary of what changed (`status: todo → in-progress`, `pr attached`, `work log appended`),
-- a nudge that the dashboard is **not** auto-refreshed — they can ask Claude to run `obsidian-ticket-rebuild` or ask pi to run `obsidian_ticket_rebuild` / `/tickets-rebuild`. The Kanban refresh is `obsidian-ticket-kanban-rebuild` (Claude) or `obsidian_ticket_kanban_rebuild` / `/tickets-kanban-rebuild` (pi).
+- one of: "dashboard + Kanban refreshed via pi", "pi not installed — run `obsidian-ticket-rebuild` to refresh", or "pi refresh failed: \<error\>".
 
 ## Anti-patterns
 
 - **Don't** create a new ticket if the identifier doesn't resolve. Error instead.
-- **Don't** touch the dashboard or Kanban file from this skill — that's the rebuild skills.
+- **Don't** regenerate the dashboard/Kanban inline in markdown — always delegate to pi via Step 6. The standalone `obsidian-ticket-rebuild` Claude skill exists as a fallback when pi isn't available.
 - **Don't** clobber unknown frontmatter keys. Preserve everything the user has added.
 - **Don't** rewrite user-authored body sections.
 - **Don't** strip status from existing tags before adding the new one — replace the single `status/*` entry, keep all others.
