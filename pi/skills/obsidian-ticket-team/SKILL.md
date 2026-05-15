@@ -74,6 +74,23 @@ Resolution order:
 
 ## Workflow
 
+## Status lifecycle automation
+
+Keep the Obsidian ticket status aligned with major workflow milestones, but do not churn status on every review loop or minor re-review.
+
+Use `obsidian_ticket_update` whenever it is available; avoid raw note edits for status/PR/work-log changes. Each update should include a concise `workLog` entry so the generated Kanban board can be rebuilt from ticket frontmatter.
+
+Natural lifecycle mapping:
+
+- Team/implementation starts → `status: in-progress` with a work-log entry that work started.
+- A real blocker prevents progress → `status: blocked` with the blocking reason.
+- Implementation is complete and a PR or review handoff exists → `status: needs-review`; set `pr:` when there is a PR URL.
+- Reviewer requests changes → usually keep `needs-review`; switch back to `in-progress` only if substantial implementation work resumes.
+- Focused validation passes but PR is not merged yet → keep `needs-review`.
+- PR is merged, the user explicitly accepts completion, or the work is otherwise fully shipped → `status: done` with the merge/completion reference.
+
+When the `obsidian-tickets` extension has a Kanban board configured or already created, these status updates automatically re-render the board. If the board was not created yet, call `obsidian_ticket_kanban_rebuild` once after the first status update.
+
 ### 1. Read and summarize the ticket
 
 Extract:
@@ -95,7 +112,7 @@ Before spawning agents, make minimal additive updates when appropriate:
 - ensure `type: ticket`, `updated`, `## Work Log`, and `## PR` exist,
 - append a work-log entry that a visual team was started.
 
-Prefer `obsidian_ticket_update` for status and work-log changes. Do not rewrite the user's problem statement or unrelated note content.
+Prefer `obsidian_ticket_update` for status and work-log changes. If the Kanban board has not been created yet, call `obsidian_ticket_kanban_rebuild` once after the update. Do not rewrite the user's problem statement or unrelated note content.
 
 ### 3. Prepare repository context
 
@@ -167,7 +184,7 @@ The implementer must:
 8. Push/open or update a PR only when requested or clearly part of the ticket workflow.
 9. Report status, changed files, validation, commit hash, and PR URL to the team lead.
 
-Prefer that the team lead updates the Obsidian note. Implementers should not edit the note unless explicitly asked, to avoid concurrent note rewrites.
+Give implementers explicit lifecycle instructions in their spawn task: use `obsidian_ticket_update` for milestone updates (`in-progress`, `blocked`, `needs-review`, `done`) when the tool is available, and never hand-edit the Obsidian note. If tools are unavailable, report the milestone to the team lead so the lead can update the note.
 
 ### 6. Track progress in Obsidian
 
@@ -181,11 +198,11 @@ As messages arrive, append concise work-log entries, for example:
 
 When a PR exists:
 
-- set/update the `pr:` frontmatter field,
-- add the PR URL under `## PR`,
+- call `obsidian_ticket_update` with `status: needs-review`, `pr: <url>`, and a concise work-log entry,
+- add the PR URL under `## PR` through the tool,
 - optionally call `team_watch_pr` so Codex/AI comments are routed back to the implementer and human comments surface to the team lead.
 
-When complete, mark acceptance criteria as checked only when actually satisfied and set status to `done`, or set status to `blocked` with a short reason.
+When complete, mark acceptance criteria as checked only when actually satisfied and call `obsidian_ticket_update` with `status: done`, or set `status: blocked` with a short reason when progress cannot continue.
 
 ## Multiple Obsidian tickets
 

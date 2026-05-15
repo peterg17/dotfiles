@@ -16,7 +16,9 @@ This is a small, single-action skill: no team setup, no PR, no cron. Use it when
 
 **When not to use:**
 - The user wants you to *do* the work — that's `single-jira-ticket-team` / `parallel-jira-tickets` (Jira) or `obsidian-ticket-claude-team` (Obsidian).
-- The user wants to *update* an existing ticket — use ordinary `Edit` on the note, or ask pi to run `obsidian_ticket_update`.
+- The user wants to *list* existing tickets — use `obsidian-ticket-list`.
+- The user wants to *update* an existing ticket (status, PR, work log) — use `obsidian-ticket-update`, or ask pi to run `obsidian_ticket_update`.
+- The user wants to *refresh* the generated dashboard or Kanban — use `obsidian-ticket-rebuild` or `obsidian-ticket-kanban-rebuild`.
 - The user wants to capture a link/idea into the inbox MOC — use `obsidian-inbox-cleanup` instead.
 
 ## Required tools
@@ -129,7 +131,7 @@ Write the file via `Write`. Then tell the user:
 - absolute path of the new note,
 - vault-relative path,
 - the `[[wikilink]]` form,
-- if applicable: a one-line nudge that the pi dashboard at `00 Maps/Agentic Tasks.md` (or `$OBSIDIAN_TICKETS_DASHBOARD`) **will not auto-refresh** from Claude — the user can ask pi to run `obsidian_ticket_rebuild` if they need the dashboard updated, or it will refresh next time pi creates/updates any ticket.
+- if applicable: a one-line nudge that the pi dashboard at `00 Maps/Agentic Tasks.md` (or `$OBSIDIAN_TICKETS_DASHBOARD`) **will not auto-refresh** from this skill — the user can refresh it via the `obsidian-ticket-rebuild` Claude skill, or by asking pi to run `obsidian_ticket_rebuild` / `/tickets-rebuild`. It will also refresh next time pi creates/updates any ticket.
 
 That's the end of the skill. No commits, no PRs, no Obsidian-side side effects beyond the note write.
 

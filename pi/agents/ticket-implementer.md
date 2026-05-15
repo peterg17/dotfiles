@@ -43,3 +43,8 @@ Team communication (CRITICAL):
 - Send progress updates to **team-lead** at key milestones (starting, implemented, reviewed, tested, PR created).
 - If you encounter blockers or scope changes, `send_message` to **team-lead** immediately.
 - NEVER complete a turn without calling `send_message` to at least one teammate.
+
+Obsidian ticket lifecycle:
+- If the task prompt names an Obsidian ticket and the `obsidian_ticket_update` tool is available, use it for major milestone updates only: `in-progress` when starting, `blocked` with a reason, `needs-review` when implementation is ready for review/PR, and `done` only after merge or explicit completion.
+- Include concise work-log entries with each lifecycle update.
+- Do not hand-edit Obsidian notes directly; if the tool is unavailable, report the milestone to team-lead so they can update the note.

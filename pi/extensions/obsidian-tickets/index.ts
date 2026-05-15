@@ -6,8 +6,19 @@ import { Type } from "typebox";
 
 const DEFAULT_TICKET_DIR = "01 Projects/Tickets";
 const DEFAULT_TASK_MOC_PATH = "00 Maps/Agentic Tasks.md";
+const DEFAULT_KANBAN_PATH = "00 Maps/Agentic Tasks Kanban.md";
+const DEFAULT_KANBAN_DONE_LIMIT = 20;
 const STATUS_ORDER = ["in-progress", "needs-review", "blocked", "todo", "done", "archived"];
+const STATUS_LABELS: Record<string, string> = {
+	"in-progress": "In Progress",
+	"needs-review": "Needs Review",
+	blocked: "Blocked",
+	todo: "Todo",
+	done: "Done",
+	archived: "Archived",
+};
 const PRIORITY_ORDER = ["urgent", "high", "medium", "low"];
+const PRIORITY_BADGES: Record<string, string> = { urgent: "🔴", high: "🟠", medium: "🟡", low: "🟢" };
 const FRONTMATTER_KEYS = new Set(["type", "status", "priority", "project", "created", "updated", "repo", "branch", "pr", "tags"]);
 const DASHBOARD_SCAN_DIRS_KEY = "ticket-scan-dirs";
 const runtimeScanDirs = new Set<string>();
@@ -61,6 +72,15 @@ function configuredTicketDir(): string {
 
 function configuredTaskMocPath(): string {
 	return trimSlashes(process.env.OBSIDIAN_TICKETS_DASHBOARD || DEFAULT_TASK_MOC_PATH);
+}
+
+function configuredKanbanPath(): string {
+	return trimSlashes(process.env.OBSIDIAN_TICKETS_KANBAN || DEFAULT_KANBAN_PATH);
+}
+
+function configuredKanbanDoneLimit(): number {
+	const parsed = Number.parseInt(process.env.OBSIDIAN_TICKETS_KANBAN_DONE_LIMIT || "", 10);
+	return Number.isFinite(parsed) && parsed > 0 ? parsed : DEFAULT_KANBAN_DONE_LIMIT;
 }
 
 function configuredEnvScanDirs(): string[] {
@@ -218,6 +238,67 @@ function vaultPath(rel: string): string {
 	return abs;
 }
 
+function safeVaultWritePath(rel: string): string {
+	const root = configuredVaultRoot();
+	fs.mkdirSync(root, { recursive: true });
+	const realRoot = fs.realpathSync(root);
+	const abs = vaultPath(rel);
+	const parent = path.dirname(abs);
+	const relativeParent = path.relative(root, parent);
+	if (relativeParent.startsWith("..") || path.isAbsolute(relativeParent)) {
+		throw new Error(`Path parent resolves outside configured Obsidian vault: ${rel}`);
+	}
+	let current = root;
+	for (const part of relativeParent.split(path.sep).filter(Boolean)) {
+		current = path.join(current, part);
+		let stat: fs.Stats | null = null;
+		try {
+			stat = fs.lstatSync(current);
+		} catch (error: any) {
+			if (error?.code !== "ENOENT") throw error;
+		}
+		if (!stat) {
+			fs.mkdirSync(current);
+			stat = fs.lstatSync(current);
+		}
+		if (stat.isSymbolicLink()) throw new Error(`Refusing to write through symlink in Obsidian vault: ${rel}`);
+		if (!stat.isDirectory()) throw new Error(`Path parent is not a directory in Obsidian vault: ${rel}`);
+		const realCurrent = fs.realpathSync(current);
+		if (!isInsideOrEqual(realRoot, realCurrent)) {
+			throw new Error(`Path parent resolves outside configured Obsidian vault: ${rel}`);
+		}
+	}
+	let stat: fs.Stats | null = null;
+	try {
+		stat = fs.lstatSync(abs);
+	} catch (error: any) {
+		if (error?.code !== "ENOENT") throw error;
+	}
+	if (stat) {
+		if (stat.isSymbolicLink()) throw new Error(`Refusing to write through symlink in Obsidian vault: ${rel}`);
+		const realTarget = fs.realpathSync(abs);
+		if (!isInsideOrEqual(realRoot, realTarget)) {
+			throw new Error(`Path target resolves outside configured Obsidian vault: ${rel}`);
+		}
+	}
+	return abs;
+}
+
+function writeVaultFile(rel: string, content: string): void {
+	const abs = safeVaultWritePath(rel);
+	const noFollow = fs.constants.O_NOFOLLOW ?? 0;
+	let fd: number | null = null;
+	try {
+		fd = fs.openSync(abs, fs.constants.O_WRONLY | fs.constants.O_CREAT | fs.constants.O_TRUNC | noFollow, 0o666);
+		fs.writeFileSync(fd, content, "utf-8");
+	} catch (error: any) {
+		if (error?.code === "ELOOP") throw new Error(`Refusing to write through symlink in Obsidian vault: ${rel}`);
+		throw error;
+	} finally {
+		if (fd !== null) fs.closeSync(fd);
+	}
+}
+
 function relativeToVault(absOrRel: string): string {
 	const withoutAt = absOrRel.trim().replace(/^@/, "");
 	const root = configuredVaultRoot();
@@ -276,6 +357,10 @@ function renderTicketFrontmatter(meta: TicketMeta, preservedLines: string[] = []
 
 function renderDashboardFrontmatter(scanDirs: string[]): string {
 	return ["---", "type: dashboard", "dashboard: agentic-tasks", `updated: ${today()}`, "tags:", "  - agentic/tasks", `${DASHBOARD_SCAN_DIRS_KEY}:`, ...yamlList(scanDirs), "---", ""].join("\n") + "\n";
+}
+
+function renderKanbanFrontmatter(scanDirs: string[]): string {
+	return ["---", "kanban-plugin: board", "type: dashboard", "dashboard: agentic-tasks-kanban", `updated: ${today()}`, "tags:", "  - agentic/tasks", "  - agentic/kanban", `${DASHBOARD_SCAN_DIRS_KEY}:`, ...yamlList(scanDirs), "---", ""].join("\n") + "\n";
 }
 
 function parseFrontmatterBlock(content: string): FrontmatterBlock | null {
@@ -594,6 +679,59 @@ function renderTaskMoc(tickets: TicketRecord[]): string {
 	return md;
 }
 
+function humanizeStatus(status: string): string {
+	return STATUS_LABELS[status] || status.replace(/-/g, " ").replace(/\b\w/g, (char) => char.toUpperCase());
+}
+
+function escapeHtml(value: string): string {
+	return value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+}
+
+function kanbanColumns(tickets: TicketRecord[]): string[] {
+	const statuses = new Set([...STATUS_ORDER, ...tickets.map((ticket) => normalizeStatus(ticket.meta.status || "todo"))]);
+	return Array.from(statuses).sort((a, b) => statusSortKey(a) - statusSortKey(b) || a.localeCompare(b));
+}
+
+function sortTicketsForKanban(a: TicketRecord, b: TicketRecord): number {
+	return prioritySortKey(a.meta.priority) - prioritySortKey(b.meta.priority) || b.meta.updated.localeCompare(a.meta.updated) || a.title.localeCompare(b.title);
+}
+
+function kanbanCard(ticket: TicketRecord): string {
+	const status = normalizeStatus(ticket.meta.status);
+	const checked = status === "done" || status === "archived" ? "x" : " ";
+	const priority = normalizePriority(ticket.meta.priority);
+	const meta = [`${PRIORITY_BADGES[priority] || "⚪️"} ${priority}`, ticket.meta.project, `updated ${ticket.meta.updated}`];
+	if (ticket.meta.pr) meta.push(`PR ${ticket.meta.pr}`);
+	return `- [${checked}] ${wikiLink(ticket.path, ticket.title)}<br><sub>${meta.filter(Boolean).map(escapeHtml).join(" · ")}</sub>`;
+}
+
+function renderKanbanSettings(): string {
+	// Obsidian Kanban parses the fenced body as raw JSON; adding a language
+	// marker like ```json makes mobile parse the word "json" as JSON content.
+	return ["%% kanban:settings", "```", JSON.stringify({ "kanban-plugin": "board", "list-collapse": [] }, null, 2), "```", "%%", ""].join("\n");
+}
+
+function renderKanbanBoard(tickets: TicketRecord[]): string {
+	const doneLimit = configuredKanbanDoneLimit();
+	let md = renderKanbanFrontmatter(configuredScanDirs());
+	md += "%% Generated by the obsidian-tickets Pi extension. Ticket notes are the source of truth; manual card moves are overwritten on rebuild. %%\n";
+	md += `%% Done and archived columns show the ${doneLimit} most recently updated tickets for mobile readability. Rebuild with /tickets-kanban-rebuild. %%\n\n`;
+	for (const status of kanbanColumns(tickets)) {
+		let items = tickets.filter((ticket) => normalizeStatus(ticket.meta.status) === status).sort(sortTicketsForKanban);
+		const total = items.length;
+		if (status === "done" || status === "archived") {
+			items = items.sort((a, b) => b.meta.updated.localeCompare(a.meta.updated) || a.title.localeCompare(b.title)).slice(0, doneLimit);
+		}
+		md += `## ${humanizeStatus(status)}\n\n`;
+		if (total > items.length) md += `<!-- Showing ${items.length} of ${total}; older ${status} tickets are hidden for mobile readability. -->\n`;
+		if (items.length) md += items.map(kanbanCard).join("\n") + "\n";
+		else md += "%% No tickets in this status. %%\n";
+		md += "\n";
+	}
+	md += renderKanbanSettings();
+	return md;
+}
+
 function isTicketMigrationCandidate(content: string): boolean {
 	const fm = parseSimpleFrontmatter(content);
 	if (fm.type === "ticket") return true;
@@ -620,17 +758,43 @@ function migrateTickets(dryRun = false): MigrationResult {
 	return { checked, updated, dryRun };
 }
 
-function rebuildTaskMoc(): TicketRecord[] {
+function rebuildTaskMoc(tickets = listTickets()): TicketRecord[] {
+	writeVaultFile(configuredTaskMocPath(), renderTaskMoc(tickets));
+	return tickets;
+}
+
+function rebuildKanbanBoard(tickets = listTickets()): TicketRecord[] {
+	writeVaultFile(configuredKanbanPath(), renderKanbanBoard(tickets));
+	return tickets;
+}
+
+function kanbanBoardExists(): boolean {
+	try {
+		const stat = fs.lstatSync(vaultPath(configuredKanbanPath()));
+		return stat.isFile() && !stat.isSymbolicLink();
+	} catch {
+		return false;
+	}
+}
+
+function shouldAutoRebuildKanban(): boolean {
+	return (typeof process.env.OBSIDIAN_TICKETS_KANBAN === "string" && process.env.OBSIDIAN_TICKETS_KANBAN.trim() !== "") || kanbanBoardExists();
+}
+
+function kanbanRebuildStatus(): string {
+	return shouldAutoRebuildKanban() ? configuredKanbanPath() : "not rebuilt automatically until a Kanban board exists; run obsidian_ticket_kanban_rebuild or /tickets-kanban-rebuild once";
+}
+
+function rebuildDashboards(): TicketRecord[] {
 	const tickets = listTickets();
-	const dashboardPath = vaultPath(configuredTaskMocPath());
-	fs.mkdirSync(path.dirname(dashboardPath), { recursive: true });
-	fs.writeFileSync(dashboardPath, renderTaskMoc(tickets), "utf-8");
+	rebuildTaskMoc(tickets);
+	if (shouldAutoRebuildKanban()) rebuildKanbanBoard(tickets);
 	return tickets;
 }
 
 function migrateAndRebuild(dryRun = false): { migration: MigrationResult; tickets: TicketRecord[] } {
 	const migration = migrateTickets(dryRun);
-	const tickets = dryRun ? listTickets() : rebuildTaskMoc();
+	const tickets = dryRun ? listTickets() : rebuildDashboards();
 	return { migration, tickets };
 }
 
@@ -674,12 +838,12 @@ export default function (pi: ExtensionAPI) {
 	pi.registerTool({
 		name: "obsidian_ticket_create",
 		label: "Create Obsidian Ticket",
-		description: "Create a Markdown task/ticket note in the configured Obsidian vault and update the Agentic Tasks dashboard.",
+		description: "Create a Markdown task/ticket note in the configured Obsidian vault and update the Agentic Tasks dashboard, plus the Kanban board when explicitly configured.",
 		promptSnippet: "Create an Obsidian Markdown ticket/task note",
 		promptGuidelines: [
 			"Use obsidian_ticket_create when the user wants to capture a task, ticket, or agentic project work item in Obsidian.",
 			"Prefer concise titles and concrete acceptance criteria for Obsidian tickets.",
-			"obsidian_ticket_create writes Dataview-friendly ticket frontmatter and refreshes the Agentic Tasks dashboard.",
+			"obsidian_ticket_create writes Dataview-friendly ticket frontmatter and refreshes the Agentic Tasks dashboard, plus the Kanban board when OBSIDIAN_TICKETS_KANBAN is explicitly set.",
 		],
 		parameters: Type.Object({
 			title: Type.String({ description: "Ticket title" }),
@@ -697,11 +861,11 @@ export default function (pi: ExtensionAPI) {
 			includeRuntimeScanDir(folder);
 			fs.mkdirSync(vaultPath(folder), { recursive: true });
 			const rel = uniquePath(folder, params.title);
-			fs.writeFileSync(vaultPath(rel), createTicketMarkdown(params, rel), "utf-8");
+			writeVaultFile(rel, createTicketMarkdown(params, rel));
 			const { migration, tickets } = migrateAndRebuild(false);
 			return {
-				content: [{ type: "text", text: `Created Obsidian ticket: ${rel}\n${wikiLink(rel, params.title)}\nDashboard: ${configuredTaskMocPath()}` }],
-				details: { path: rel, absolutePath: vaultPath(rel), dashboard: configuredTaskMocPath(), ticketCount: tickets.length, migration },
+				content: [{ type: "text", text: `Created Obsidian ticket: ${rel}\n${wikiLink(rel, params.title)}\nDashboard: ${configuredTaskMocPath()}\nKanban: ${kanbanRebuildStatus()}` }],
+				details: { path: rel, absolutePath: vaultPath(rel), dashboard: configuredTaskMocPath(), kanban: configuredKanbanPath(), kanbanAutoRebuild: shouldAutoRebuildKanban(), ticketCount: tickets.length, migration },
 			};
 		},
 	});
@@ -731,7 +895,7 @@ export default function (pi: ExtensionAPI) {
 	pi.registerTool({
 		name: "obsidian_ticket_update",
 		label: "Update Obsidian Ticket",
-		description: "Update status, PR URL, and/or append a work-log entry to an Obsidian ticket note, then refresh the Agentic Tasks dashboard.",
+		description: "Update status, PR URL, and/or append a work-log entry to an Obsidian ticket note, then refresh the Agentic Tasks dashboard, plus the Kanban board when explicitly configured.",
 		promptSnippet: "Update an Obsidian ticket status or work log",
 		parameters: Type.Object({
 			ticket: Type.String({ description: "Ticket path, title, or wikilink" }),
@@ -751,18 +915,18 @@ export default function (pi: ExtensionAPI) {
 			}
 			fs.writeFileSync(abs, content, "utf-8");
 			const { migration, tickets } = migrateAndRebuild(false);
-			return { content: [{ type: "text", text: `Updated Obsidian ticket: ${rel}\nDashboard: ${configuredTaskMocPath()}` }], details: { path: rel, absolutePath: abs, dashboard: configuredTaskMocPath(), ticketCount: tickets.length, migration } };
+			return { content: [{ type: "text", text: `Updated Obsidian ticket: ${rel}\nDashboard: ${configuredTaskMocPath()}\nKanban: ${kanbanRebuildStatus()}` }], details: { path: rel, absolutePath: abs, dashboard: configuredTaskMocPath(), kanban: configuredKanbanPath(), kanbanAutoRebuild: shouldAutoRebuildKanban(), ticketCount: tickets.length, migration } };
 		},
 	});
 
 	pi.registerTool({
 		name: "obsidian_ticket_rebuild",
 		label: "Rebuild Obsidian Ticket Dashboard",
-		description: "Backfill Dataview-friendly ticket frontmatter and regenerate the Agentic Tasks dashboard. Set dryRun to preview migration changes.",
+		description: "Backfill Dataview-friendly ticket frontmatter and regenerate the Agentic Tasks dashboard, plus the Kanban board when explicitly configured. Set dryRun to preview migration changes.",
 		promptSnippet: "Backfill Obsidian ticket frontmatter and rebuild the Agentic Tasks dashboard",
-		promptGuidelines: ["Use obsidian_ticket_rebuild when existing Obsidian tickets need migration/backfill or the Agentic Tasks dashboard needs regeneration."],
+		promptGuidelines: ["Use obsidian_ticket_rebuild when existing Obsidian tickets need migration/backfill or the Agentic Tasks dashboard needs regeneration. Use obsidian_ticket_kanban_rebuild for an on-demand Kanban-only refresh."],
 		parameters: Type.Object({
-			dryRun: Type.Optional(Type.Boolean({ description: "Preview migration changes without writing ticket notes or dashboard. Default: false" })),
+			dryRun: Type.Optional(Type.Boolean({ description: "Preview migration changes without writing ticket notes or dashboards. Default: false" })),
 		}),
 		async execute(_id, params) {
 			const dryRun = params.dryRun ?? false;
@@ -772,10 +936,25 @@ export default function (pi: ExtensionAPI) {
 				content: [
 					{
 						type: "text",
-						text: `${action} Obsidian ticket dashboard: ${configuredTaskMocPath()}\nTickets checked: ${migration.checked}\nTickets needing backfill: ${migration.updated.length}`,
+						text: `${action} Obsidian ticket dashboards:\nDashboard: ${configuredTaskMocPath()}\nKanban: ${dryRun ? configuredKanbanPath() : kanbanRebuildStatus()}\nTickets checked: ${migration.checked}\nTickets needing backfill: ${migration.updated.length}`,
 					},
 				],
-				details: { dashboard: configuredTaskMocPath(), ticketCount: tickets.length, migration },
+				details: { dashboard: configuredTaskMocPath(), kanban: configuredKanbanPath(), kanbanAutoRebuild: shouldAutoRebuildKanban(), ticketCount: tickets.length, migration },
+			};
+		},
+	});
+
+	pi.registerTool({
+		name: "obsidian_ticket_kanban_rebuild",
+		label: "Rebuild Obsidian Ticket Kanban",
+		description: "Regenerate the mobile-friendly Obsidian Kanban board from ticket frontmatter without editing ticket notes.",
+		promptSnippet: "Rebuild the generated Obsidian Kanban ticket board",
+		parameters: Type.Object({}),
+		async execute() {
+			const tickets = rebuildKanbanBoard();
+			return {
+				content: [{ type: "text", text: `Rebuilt Obsidian ticket Kanban: ${configuredKanbanPath()}\nTickets rendered: ${tickets.length}` }],
+				details: { kanban: configuredKanbanPath(), ticketCount: tickets.length },
 			};
 		},
 	});
@@ -790,7 +969,7 @@ export default function (pi: ExtensionAPI) {
 			includeRuntimeScanDir(folder);
 			fs.mkdirSync(vaultPath(folder), { recursive: true });
 			const rel = uniquePath(folder, title);
-			fs.writeFileSync(vaultPath(rel), createTicketMarkdown({ title, description: desc }, rel), "utf-8");
+			writeVaultFile(rel, createTicketMarkdown({ title, description: desc }, rel));
 			migrateAndRebuild(false);
 			ctx.ui.notify(`Created ticket: ${rel}`, "success");
 		},
@@ -815,10 +994,21 @@ export default function (pi: ExtensionAPI) {
 			ctx.ui.notify(`${dryRun ? "Previewed" : "Rebuilt"} ${tickets.length} tickets; ${migration.updated.length} note(s) ${dryRun ? "need" : "received"} backfill.`, "info");
 		},
 	});
+
+	pi.registerCommand("tickets-kanban-rebuild", {
+		description: "Regenerate the mobile-friendly Obsidian Kanban ticket board",
+		handler: async (_args, ctx) => {
+			const tickets = rebuildKanbanBoard();
+			ctx.ui.notify(`Rebuilt Kanban ${configuredKanbanPath()} from ${tickets.length} ticket(s).`, "info");
+		},
+	});
 }
 
 export const __test = {
 	buildTicketMeta,
+	configuredKanbanDoneLimit,
+	configuredKanbanPath,
+	shouldAutoRebuildKanban,
 	configuredTaskMocPath,
 	configuredTicketDir,
 	configuredVaultRoot,
@@ -826,6 +1016,9 @@ export const __test = {
 	migrateTickets,
 	normalizePriority,
 	normalizeStatus,
+	rebuildKanbanBoard,
+	renderKanbanBoard,
+	safeVaultWritePath,
 	renderTaskMoc,
 	replaceTicketFrontmatter,
 };
