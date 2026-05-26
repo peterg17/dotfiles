@@ -184,7 +184,7 @@ The implementer must:
 8. Push/open or update a PR only when requested or clearly part of the ticket workflow.
 9. Report status, changed files, validation, commit hash, and PR URL to the team lead.
 
-Give implementers explicit lifecycle instructions in their spawn task: use `obsidian_ticket_update` for milestone updates (`in-progress`, `blocked`, `needs-review`, `done`) when the tool is available, and never hand-edit the Obsidian note. If tools are unavailable, report the milestone to the team lead so the lead can update the note.
+Give implementers explicit lifecycle instructions in their spawn task: use `obsidian_ticket_update` for milestone updates (`in-progress`, `blocked`, `needs-review`, `done`) when the tool is available, pass the Obsidian note path (or exact title when the path is unavailable) as `ticket_refs` to PR lifecycle tools (`team_ship_pr`/`team_watch_pr`), and never hand-edit the Obsidian note. If tools are unavailable, report the milestone to the team lead so the lead can update the note.
 
 ### 6. Track progress in Obsidian
 
@@ -200,7 +200,10 @@ When a PR exists:
 
 - call `obsidian_ticket_update` with `status: needs-review`, `pr: <url>`, and a concise work-log entry,
 - add the PR URL under `## PR` through the tool,
+- when invoking `team_ship_pr` or `team_watch_pr`, pass `ticket_refs` containing the originating Obsidian note path (or exact ticket title when the path is unavailable),
 - optionally call `team_watch_pr` so Codex/AI comments are routed back to the implementer and human comments surface to the team lead.
+
+When team-tmux emits or surfaces a generic PR lifecycle event, keep the split of responsibility clear: team-tmux reports tracker-agnostic PR state, while Obsidian tooling consumes `ticket_refs` and updates Markdown tickets. The canonical terminal custom message/session entry type is `team-tmux:pr-lifecycle` with details like `{ lifecycle: "pr", event: "terminal", action: "reconcile_ticket_refs", prUrl, state: "MERGED" | "CLOSED", ticket_refs, detectedAt }`. For a merged PR, call `obsidian_ticket_pr_lifecycle` (or `obsidian_ticket_update` if the lifecycle tool is unavailable) for each linked Obsidian ticket with `status: done`, the PR URL, and a concise merge work-log. For a PR closed without merge, do not mark tickets done; record/surface a blocked or needs-review action item with the PR URL. Missing or ambiguous ticket refs require human action; ask for an absolute note path or exact ticket title instead of guessing.
 
 When complete, mark acceptance criteria as checked only when actually satisfied and call `obsidian_ticket_update` with `status: done`, or set `status: blocked` with a short reason when progress cannot continue.
 
@@ -225,6 +228,16 @@ If tickets overlap heavily, ask whether to merge them into one workflow.
 - Do not expose more note content in chat or PRs than the task requires.
 - Do not run destructive git commands, force-push, or bypass hooks without explicit approval.
 - Do not auto-reply to human PR reviewers; surface their comments to the user/team lead.
+
+## Manual PR reconciliation
+
+If a PR was already merged but the Obsidian ticket remains stale, ask Pi to run the reconciliation command/tool with an explicit PR URL and ticket ref:
+
+```text
+/tickets-pr-reconcile {"prUrl":"https://github.com/OWNER/REPO/pull/123","state":"MERGED","ticket_refs":["/absolute/path/to/Ticket.md"]}
+```
+
+Use `state: "CLOSED"` for closed-without-merge PRs; this records a blocked action item and does not mark tickets done.
 
 ## Final response
 

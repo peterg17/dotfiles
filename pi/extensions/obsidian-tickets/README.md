@@ -6,6 +6,7 @@ Dataview-first Obsidian ticket dashboard support for Pi agentic work.
 
 - `obsidian_ticket_create` creates Markdown ticket notes.
 - `obsidian_ticket_update` updates ticket status, PR metadata, work log, status tags, and dashboard.
+- `obsidian_ticket_pr_lifecycle` consumes tracker-agnostic PR terminal events with `ticket_refs` and updates linked Obsidian tickets.
 - `obsidian_ticket_rebuild` backfills legacy ticket frontmatter and regenerates the Dataview dashboard; it also regenerates the Kanban board when `OBSIDIAN_TICKETS_KANBAN` is explicitly set.
 - `obsidian_ticket_kanban_rebuild` regenerates only the mobile-friendly Kanban board.
 - `/ticket-create`, `/tickets`, `/tickets-rebuild`, and `/tickets-kanban-rebuild` provide interactive equivalents.
@@ -93,3 +94,34 @@ Rebuild on demand:
 ```
 
 Or ask Pi to call `obsidian_ticket_kanban_rebuild`.
+
+## PR lifecycle integration
+
+`team-tmux` owns tracker-agnostic PR watching/shipping and emits terminal PR lifecycle events. This Obsidian extension consumes those events and applies Obsidian-specific ticket updates. Core team-tmux does not call Obsidian APIs or edit notes/Kanban.
+
+The canonical team-tmux terminal event is a session entry and visible custom message with type `team-tmux:pr-lifecycle`. Payload details include a PR URL, terminal state, and opaque `ticket_refs` supplied by the Obsidian workflow. The consumer also accepts the earlier `team-pr-lifecycle` name only as a rollout compatibility alias; producers should emit `team-tmux:pr-lifecycle`.
+
+```json
+{
+  "lifecycle": "pr",
+  "event": "terminal",
+  "action": "reconcile_ticket_refs",
+  "prUrl": "https://github.com/OWNER/REPO/pull/123",
+  "state": "MERGED",
+  "mergedAt": "2026-05-25T23:00:00Z",
+  "ticket_refs": ["/absolute/path/to/Ticket.md"],
+  "detectedAt": "2026-05-25T23:01:00Z"
+}
+```
+
+When state is `MERGED`, each linked ticket is updated to `done` with the PR URL and a concise work-log entry. When state is `CLOSED`, linked tickets are moved to `blocked` with a human action item instead of being marked done. Ticket updates rebuild the Agentic Tasks dashboard and refresh the Kanban board when the board exists or `OBSIDIAN_TICKETS_KANBAN` is set.
+
+Missing or ambiguous `ticket_refs` are not guessed; Pi surfaces a human action asking for an absolute note path or exact ticket title.
+
+Manual reconciliation for an already-merged PR whose ticket is stale:
+
+```text
+/tickets-pr-reconcile {"prUrl":"https://github.com/OWNER/REPO/pull/123","state":"MERGED","ticket_refs":["/absolute/path/to/Ticket.md"]}
+```
+
+Agents can also ask Pi to call `obsidian_ticket_pr_lifecycle` with the same fields.

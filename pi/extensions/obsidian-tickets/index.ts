@@ -21,6 +21,7 @@ const PRIORITY_ORDER = ["urgent", "high", "medium", "low"];
 const PRIORITY_BADGES: Record<string, string> = { urgent: "🔴", high: "🟠", medium: "🟡", low: "🟢" };
 const FRONTMATTER_KEYS = new Set(["type", "status", "priority", "project", "created", "updated", "repo", "branch", "pr", "tags"]);
 const DASHBOARD_SCAN_DIRS_KEY = "ticket-scan-dirs";
+const PR_LIFECYCLE_CUSTOM_TYPES = ["team-tmux:pr-lifecycle", "team-pr-lifecycle"];
 const runtimeScanDirs = new Set<string>();
 
 type TicketStatus = "todo" | "in-progress" | "needs-review" | "blocked" | "done" | "archived" | string;
@@ -42,6 +43,17 @@ interface TicketRecord {
 	path: string;
 	title: string;
 	meta: TicketMeta;
+}
+
+interface PrLifecycleResult {
+	state: "merged" | "closed" | "unknown";
+	pr: string;
+	updated: string[];
+	actionItems: string[];
+	dashboard?: string;
+	kanban?: string;
+	kanbanAutoRebuild?: boolean;
+	ticketCount?: number;
 }
 
 interface FrontmatterBlock {
@@ -595,6 +607,153 @@ function resolveTicket(identifier: string): string | null {
 	return base?.path ?? null;
 }
 
+function normalizeTicketRef(ref: string): string {
+	let s = ref.trim().replace(/^@/, "");
+	const markdown = s.match(/^\[[^\]]+\]\(([^)]+)\)$/);
+	if (markdown) s = markdown[1].trim();
+	const wiki = s.match(/^\[\[([^\]|]+)(?:\|[^\]]+)?\]\]$/);
+	if (wiki) s = wiki[1].trim();
+	return s;
+}
+
+function uniqueTickets(tickets: TicketRecord[]): TicketRecord[] {
+	const seen = new Set<string>();
+	return tickets.filter((ticket) => {
+		if (seen.has(ticket.path)) return false;
+		seen.add(ticket.path);
+		return true;
+	});
+}
+
+function strictMatchTicketRef(ref: string, tickets: TicketRecord[]): { ticket?: TicketRecord; error?: string } {
+	const normalized = normalizeTicketRef(ref);
+	if (!normalized) return { error: "empty ticket ref" };
+
+	if (normalized.endsWith(".md")) {
+		const rel = tryRelativeToVault(normalized);
+		if (!rel) return { error: `ticket ref is not inside the configured Obsidian vault: ${ref}` };
+		const direct = readTicket(rel);
+		if (!direct) return { error: `ticket ref did not resolve to a type: ticket note: ${ref}` };
+		includeRuntimeScanDir(path.dirname(rel));
+		return { ticket: direct };
+	}
+
+	const withoutMd = normalized.replace(/\.md$/i, "");
+	const matchers = [
+		(ticket: TicketRecord) => ticket.path.replace(/\.md$/i, "") === withoutMd,
+		(ticket: TicketRecord) => ticket.title === withoutMd,
+		(ticket: TicketRecord) => path.basename(ticket.path, ".md") === withoutMd,
+		(ticket: TicketRecord) => ticket.title.toLowerCase() === withoutMd.toLowerCase(),
+		(ticket: TicketRecord) => path.basename(ticket.path, ".md").toLowerCase() === withoutMd.toLowerCase(),
+	];
+	for (const matcher of matchers) {
+		const matches = uniqueTickets(tickets.filter(matcher));
+		if (matches.length === 1) return { ticket: matches[0] };
+		if (matches.length > 1) return { error: `ambiguous ticket ref ${JSON.stringify(ref)} matched: ${matches.map((ticket) => ticket.path).join(", ")}` };
+	}
+	return { error: `could not resolve ticket ref ${JSON.stringify(ref)}; pass an absolute note path or exact ticket title` };
+}
+
+function payloadScopes(payload: any): any[] {
+	return [payload, payload?.details, payload?.data, payload?.payload, payload?.lifecycle].filter((scope) => scope && typeof scope === "object");
+}
+
+function extractTicketRefs(payload: any): string[] {
+	for (const scope of payloadScopes(payload)) {
+		const raw = scope.ticket_refs ?? scope.ticketRefs ?? scope.tickets ?? scope.ticket ?? scope.ticket_ref;
+		const values = Array.isArray(raw) ? raw : typeof raw === "string" ? [raw] : [];
+		if (values.length) return values.map((value) => String(value).trim()).filter(Boolean);
+	}
+	return [];
+}
+
+function extractPrRef(payload: any): string {
+	for (const scope of payloadScopes(payload)) {
+		const candidates = [scope.pr_url, scope.prUrl, scope.html_url, scope.url, scope.pr, scope.pull_request?.html_url];
+		const pr = candidates.find((value) => typeof value === "string" && value.trim())?.trim();
+		if (pr) return pr;
+	}
+	return "";
+}
+
+function normalizePrLifecycleState(payload: any): PrLifecycleResult["state"] {
+	for (const scope of payloadScopes(payload)) {
+		const raw = String(scope.state ?? scope.status ?? scope.action ?? scope.event ?? scope.conclusion ?? "").toLowerCase();
+		if (scope.merged === true || scope.merged_at || /(^|[._:-])merged?$/.test(raw) || raw.includes("pr_merged") || raw.includes("pull_request.merged")) return "merged";
+		if (scope.merged === false && (raw.includes("closed") || raw.includes("close"))) return "closed";
+		if (raw.includes("closed_without_merge") || raw.includes("closed-unmerged") || raw.includes("closed") || raw.includes("close")) return "closed";
+	}
+	return "unknown";
+}
+
+function updateTicketRecord(rel: string, updates: Partial<TicketMeta>, workLog?: string): void {
+	const abs = vaultPath(rel);
+	let content = fs.readFileSync(abs, "utf-8");
+	content = updateTicketContent(content, rel, updates);
+	if (workLog) content = appendWorkLog(content, workLog);
+	if (updates.pr && !stripFrontmatter(content).includes(updates.pr)) {
+		content = content.replace(/^##\s+PR\s*$/m, `## PR\n\n- ${updates.pr}`);
+	}
+	fs.writeFileSync(abs, content, "utf-8");
+}
+
+function consumePrLifecycleEvent(payload: any): PrLifecycleResult {
+	const state = normalizePrLifecycleState(payload);
+	const pr = extractPrRef(payload);
+	const refs = extractTicketRefs(payload);
+	const result: PrLifecycleResult = { state, pr, updated: [], actionItems: [] };
+	if (refs.length === 0) {
+		result.actionItems.push("PR lifecycle event had no ticket_refs; pass the originating Obsidian note path or exact ticket title.");
+		return result;
+	}
+	if (state === "unknown") {
+		result.actionItems.push("PR lifecycle event state was not merged or closed; no Obsidian ticket status was changed.");
+		return result;
+	}
+	if (!pr) {
+		result.actionItems.push("PR lifecycle event had no PR URL/identifier; no Obsidian ticket status was changed.");
+		return result;
+	}
+
+	const tickets = listTickets();
+	const resolved = uniqueTickets(
+		refs.flatMap((ref) => {
+			const match = strictMatchTicketRef(ref, tickets);
+			if (match.error) result.actionItems.push(match.error);
+			return match.ticket ? [match.ticket] : [];
+		}),
+	);
+	if (result.actionItems.length > 0 || resolved.length === 0) return result;
+
+	for (const ticket of resolved) {
+		if (state === "merged") {
+			updateTicketRecord(ticket.path, { status: "done", pr }, `PR merged: ${pr}.`);
+		} else {
+			updateTicketRecord(ticket.path, { status: "blocked", pr }, `PR closed without merge: ${pr}. Human action needed: reopen, replace the PR, or move this ticket back to needs-review if work continues.`);
+		}
+		result.updated.push(ticket.path);
+	}
+	const { tickets: refreshedTickets } = migrateAndRebuild(false);
+	result.dashboard = configuredTaskMocPath();
+	result.kanban = configuredKanbanPath();
+	result.kanbanAutoRebuild = shouldAutoRebuildKanban();
+	result.ticketCount = refreshedTickets.length;
+	return result;
+}
+
+function lifecycleResultText(result: PrLifecycleResult): string {
+	const lines = [`PR lifecycle state: ${result.state}`, result.pr ? `PR: ${result.pr}` : "PR: missing"];
+	if (result.updated.length) lines.push(`Updated tickets: ${result.updated.join(", ")}`);
+	if (result.actionItems.length) lines.push(`Action needed: ${result.actionItems.join("; ")}`);
+	if (result.dashboard) lines.push(`Dashboard: ${result.dashboard}`);
+	if (result.kanban) lines.push(`Kanban: ${result.kanbanAutoRebuild ? result.kanban : `${result.kanban} (not auto-rebuilt until board exists or OBSIDIAN_TICKETS_KANBAN is set)`}`);
+	return lines.join("\n");
+}
+
+function isPrLifecycleCustomType(customType: unknown): boolean {
+	return typeof customType === "string" && PR_LIFECYCLE_CUSTOM_TYPES.includes(customType);
+}
+
 function statusSortKey(status: string): number {
 	const index = STATUS_ORDER.indexOf(status);
 	return index === -1 ? STATUS_ORDER.length : index;
@@ -835,6 +994,51 @@ function updateTicketContent(content: string, rel: string, updates: Partial<Tick
 }
 
 export default function (pi: ExtensionAPI) {
+	let currentCtx: any;
+	const seenLifecycleEvents = new Set<string>();
+	pi.on("session_start", async (_event, ctx) => {
+		currentCtx = ctx;
+	});
+
+	function lifecycleEventKey(payload: any): string {
+		return JSON.stringify({ pr: extractPrRef(payload), state: normalizePrLifecycleState(payload), refs: extractTicketRefs(payload), detectedAt: payload?.detectedAt ?? payload?.details?.detectedAt });
+	}
+
+	function surfaceLifecycleResult(result: PrLifecycleResult): void {
+		const text = lifecycleResultText(result);
+		if (result.updated.length) currentCtx?.ui?.notify?.(`Obsidian tickets updated from PR lifecycle: ${result.updated.join(", ")}`, "success");
+		if (result.actionItems.length) {
+			currentCtx?.ui?.notify?.("Obsidian ticket PR lifecycle needs human action", "info");
+			pi.sendMessage(
+				{
+					customType: "team-message",
+					content: `[Obsidian ticket PR lifecycle]\n${text}`,
+					display: true,
+					details: { from: "obsidian-tickets", timestamp: Date.now() },
+				},
+				{ triggerTurn: true, deliverAs: "followUp" },
+			);
+		}
+	}
+
+	function consumeAndSurfaceLifecycle(payload: any): void {
+		const key = lifecycleEventKey(payload);
+		if (seenLifecycleEvents.has(key)) return;
+		seenLifecycleEvents.add(key);
+		surfaceLifecycleResult(consumePrLifecycleEvent(payload));
+	}
+
+	for (const eventName of ["team-pr-lifecycle", "team-tmux:pr-lifecycle", "team-tmux:pr_lifecycle", "team_pr_lifecycle", "pr:lifecycle"]) {
+		pi.events.on(eventName, (payload: any) => consumeAndSurfaceLifecycle(payload));
+	}
+
+	pi.on("message_end", async (event) => {
+		const message = event.message as any;
+		if (message?.role === "custom" && isPrLifecycleCustomType(message.customType)) {
+			consumeAndSurfaceLifecycle(message.details ?? message);
+		}
+	});
+
 	pi.registerTool({
 		name: "obsidian_ticket_create",
 		label: "Create Obsidian Ticket",
@@ -906,16 +1110,35 @@ export default function (pi: ExtensionAPI) {
 		async execute(_id, params) {
 			const rel = resolveTicket(params.ticket);
 			if (!rel) throw new Error(`Could not find Obsidian ticket: ${params.ticket}`);
-			const abs = vaultPath(rel);
-			let content = fs.readFileSync(abs, "utf-8");
-			content = updateTicketContent(content, rel, { status: params.status as any, pr: params.pr });
-			if (params.workLog) content = appendWorkLog(content, params.workLog);
-			if (params.pr && !stripFrontmatter(content).includes(params.pr)) {
-				content = content.replace(/^##\s+PR\s*$/m, `## PR\n\n- ${params.pr}`);
-			}
-			fs.writeFileSync(abs, content, "utf-8");
+			updateTicketRecord(rel, { status: params.status as any, pr: params.pr }, params.workLog);
 			const { migration, tickets } = migrateAndRebuild(false);
-			return { content: [{ type: "text", text: `Updated Obsidian ticket: ${rel}\nDashboard: ${configuredTaskMocPath()}\nKanban: ${kanbanRebuildStatus()}` }], details: { path: rel, absolutePath: abs, dashboard: configuredTaskMocPath(), kanban: configuredKanbanPath(), kanbanAutoRebuild: shouldAutoRebuildKanban(), ticketCount: tickets.length, migration } };
+			return { content: [{ type: "text", text: `Updated Obsidian ticket: ${rel}\nDashboard: ${configuredTaskMocPath()}\nKanban: ${kanbanRebuildStatus()}` }], details: { path: rel, absolutePath: vaultPath(rel), dashboard: configuredTaskMocPath(), kanban: configuredKanbanPath(), kanbanAutoRebuild: shouldAutoRebuildKanban(), ticketCount: tickets.length, migration } };
+		},
+	});
+
+	pi.registerTool({
+		name: "obsidian_ticket_pr_lifecycle",
+		label: "Apply Obsidian Ticket PR Lifecycle",
+		description: "Consume a tracker-agnostic PR lifecycle event and update linked Obsidian tickets by ticket_refs.",
+		promptSnippet: "Apply PR merged/closed lifecycle results to linked Obsidian tickets",
+		promptGuidelines: [
+			"Use obsidian_ticket_pr_lifecycle when team-tmux reports a terminal PR lifecycle event with Obsidian ticket_refs.",
+			"Merged PRs mark linked Obsidian tickets done with PR metadata; closed-unmerged PRs are recorded as blocked action items, never done.",
+			"If ticket_refs are missing or ambiguous, surface the action item instead of guessing.",
+		],
+		parameters: Type.Object({
+			pr: Type.Optional(Type.String({ description: "PR URL or identifier" })),
+			pr_url: Type.Optional(Type.String({ description: "PR URL" })),
+			state: Type.Optional(Type.String({ description: "Terminal PR state, e.g. merged or closed" })),
+			status: Type.Optional(Type.String({ description: "Alternate terminal PR status" })),
+			action: Type.Optional(Type.String({ description: "Alternate terminal PR action" })),
+			merged: Type.Optional(Type.Boolean({ description: "Whether the PR was merged" })),
+			ticket_refs: Type.Optional(Type.Array(Type.String(), { description: "Opaque ticket refs, preferably absolute Obsidian note paths or exact ticket titles" })),
+			ticketRefs: Type.Optional(Type.Array(Type.String(), { description: "camelCase alias for ticket_refs" })),
+		}),
+		async execute(_id, params) {
+			const result = consumePrLifecycleEvent(params);
+			return { content: [{ type: "text", text: lifecycleResultText(result) }], details: result };
 		},
 	});
 
@@ -986,6 +1209,25 @@ export default function (pi: ExtensionAPI) {
 		},
 	});
 
+	pi.registerCommand("tickets-pr-reconcile", {
+		description: "Reconcile stale Obsidian ticket status from a terminal PR lifecycle JSON payload",
+		handler: async (args, ctx) => {
+			if (!args.trim()) {
+				ctx.ui.notify('Usage: /tickets-pr-reconcile {"prUrl":"https://github.com/OWNER/REPO/pull/123","state":"MERGED","ticket_refs":["/absolute/path/to/ticket.md"]}', "info");
+				return;
+			}
+			let payload: any;
+			try {
+				payload = JSON.parse(args);
+			} catch {
+				ctx.ui.notify("Expected JSON payload for /tickets-pr-reconcile; include prUrl, state, and ticket_refs.", "info");
+				return;
+			}
+			const result = consumePrLifecycleEvent(payload);
+			ctx.ui.notify(lifecycleResultText(result), result.actionItems.length ? "info" : "success");
+		},
+	});
+
 	pi.registerCommand("tickets-rebuild", {
 		description: "Backfill ticket frontmatter and rebuild the Agentic Tasks dashboard",
 		handler: async (args, ctx) => {
@@ -1019,6 +1261,10 @@ export const __test = {
 	rebuildKanbanBoard,
 	renderKanbanBoard,
 	safeVaultWritePath,
+	consumePrLifecycleEvent,
+	extractTicketRefs,
+	normalizePrLifecycleState,
+	isPrLifecycleCustomType,
 	renderTaskMoc,
 	replaceTicketFrontmatter,
 };
