@@ -7,7 +7,7 @@
   email = petergriggs17@gmail.com
 	signingkey = ~/.ssh/id_ed25519_signing.pub
 [core]
-	editor = nvr -cc split --remote-wait +'set bufhidden=delete'
+	editor = nvr -cc tabnew --remote-wait +'set bufhidden=delete'
 
 [alias]
   lg = log --graph --oneline --all --decorate
