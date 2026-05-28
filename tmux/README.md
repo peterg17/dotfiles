@@ -24,9 +24,22 @@ The default tmux prefix is `Ctrl-b`. Press the prefix, release it, then press th
 | New window | `Ctrl-b c` |
 | Next window | `Ctrl-b n` |
 | Previous window | `Ctrl-b p` |
-| Pick window | `Ctrl-b w` |
+| Jump to window by number | `Ctrl-b 0` … `Ctrl-b 9` |
+| Last (previously active) window | `Ctrl-b l` |
+| Pick window (interactive list) | `Ctrl-b w` |
+| Find window by name | `Ctrl-b f` |
 | Rename window | `Ctrl-b ,` |
 | Close window | `Ctrl-b &` |
+| Swap window left | `Ctrl-b <` (custom) |
+| Swap window right | `Ctrl-b >` (custom) |
+
+Tip: to switch windows without the prefix, add Alt-arrow bindings to
+`tmux/.tmux.conf.local`:
+
+```tmux
+bind -n M-Left  previous-window
+bind -n M-Right next-window
+```
 
 ## Splitting panes
 
