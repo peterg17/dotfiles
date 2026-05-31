@@ -63,7 +63,7 @@
     - command: "python3 \"$PWD/pi/merge-settings.py\" \"$PWD/pi/settings.json\""
       description: Merge public pi settings into ~/.pi/agent/settings.json (preserves state pi writes itself, e.g. lastChangelogVersion)
     - command: "for legacy in \"$HOME/.pi/agent/skills/obsidian-inbox-cleanup\" \"$HOME/.agents/skills/obsidian-inbox-cleanup\" \"$HOME/.claude/skills/obsidian-inbox-cleanup\"; do expected=\"$PWD/agents/skills/obsidian-inbox-cleanup\"; if [ -L \"$legacy\" ] && [ \"$(readlink \"$legacy\")\" = \"$expected\" ]; then rm \"$legacy\"; echo \"Removed obsolete global Obsidian inbox cleanup skill symlink: $legacy\"; fi; done"
-      description: Remove obsolete global Obsidian inbox cleanup skill symlinks; the skill is vault-local under ~/Documents/notes/.pi/skills
+      description: Remove obsolete global Obsidian inbox cleanup skill symlinks; the skill is vault-local and not dotfiles-managed
     - command: "git config --local user.email 'petergriggs17@gmail.com' && git config --local user.name 'Peter Griggs'"
       description: Pin personal email for the dotfiles repo (overrides any global/local config)
     - command: "git config --global core.editor \"nvr -cc split --remote-wait +'set bufhidden=delete'\""

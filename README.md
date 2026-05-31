@@ -213,11 +213,11 @@ To add a portable shared skill, put it under `agents/skills/<name>/SKILL.md` and
 
 The Obsidian inbox cleanup workflow is intentionally **vault-local**, not dotfiles-managed, because it depends on the private notes vault layout and `AGENTS.md` rules.
 
-Source of truth:
+Source of truth: the notes vault's local `.pi/` directory:
 
-- Skill: `~/Documents/notes/.pi/skills/obsidian-inbox-cleanup/SKILL.md`
-- Runner: `~/Documents/notes/.pi/scripts/process-index.sh`
-- LaunchAgent template: `~/Documents/notes/.pi/launchd/com.peterg17.obsidian-index-cleanup.plist`
-- Setup docs: `~/Documents/notes/.pi/README.md`
+- Skill: `.pi/skills/obsidian-inbox-cleanup/SKILL.md`
+- Runner: `.pi/scripts/process-index.sh`
+- LaunchAgent template: `.pi/launchd/com.peterg17.obsidian-index-cleanup.plist`
+- Setup docs: `.pi/README.md`
 
 Do not symlink this skill into `~/.agents/skills`, `~/.claude/skills`, or `~/.pi/agent/skills`; doing so creates duplicate skill discovery/collision warnings. Install or refresh the background job from the notes vault README instead.
