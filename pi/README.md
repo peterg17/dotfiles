@@ -9,17 +9,15 @@ The ticket workflow is a pi adaptation of the Claude `parallel-jira-tickets` wor
 Two execution modes:
 
 - **Subagent mode** (headless) — the `ticket-workflow` skill runs sub-pi processes in chains/parallel and returns results inline.
-- **Visual team mode** (tmux) — the `team-ticket` and `obsidian-ticket-team` skills spawn labeled tmux panes for each agent (reviewer, tester, implementer-per-ticket) with inter-agent messaging and PR-comment polling. Pi equivalent of [Claude Code Agent Teams](https://code.claude.com/docs/en/agent-teams).
+- **Visual team mode** (tmux) — the `team-ticket` skill spawns labeled tmux panes for each agent (reviewer, tester, implementer-per-ticket) with inter-agent messaging and PR-comment polling. Pi equivalent of [Claude Code Agent Teams](https://code.claude.com/docs/en/agent-teams).
 
 ### Installed resources
 
 - Skills:
   - `pi/skills/ticket-workflow/SKILL.md` — headless subagent orchestration
   - `pi/skills/team-ticket/SKILL.md` — visual tmux team orchestration for Jira/GitHub-style tickets (1–5 tickets, shared reviewer/tester, PR comment polling)
-  - `pi/skills/obsidian-ticket-team/SKILL.md` — visual tmux team orchestration for Obsidian Markdown ticket notes
 - Extensions/packages:
   - `pi/extensions/subagent/` — spawn isolated sub-pi processes for chained / parallel work
-  - `pi/extensions/obsidian-tickets/` — create/update Obsidian ticket notes and generate a Dataview-first Agentic Tasks dashboard with Markdown fallback
   - `git:github.com/peterg17/pi-teams-tmux` — visual agent teams in tmux panes; registers `team_create`, `team_spawn`, `team_send`, `team_status`, `team_watch_pr`, `team_unwatch_pr`, `team_destroy` tools and a teammate `send_message` tool
 - Agents:
   - `ticket-jira-analyst` — reads/summarizes Jira tickets
@@ -92,14 +90,6 @@ Multiple tickets in parallel with a visual team:
 /skill:team-ticket PROJ-123 PROJ-456 PROJ-789
 ```
 
-Spawn a visual team from an Obsidian ticket note:
-
-```text
-/skill:obsidian-ticket-team [[My Obsidian Ticket]]
-```
-
-Generated Obsidian tickets include this instruction under `## Agent Instructions`.
-
 ### Commit / PR behavior
 
 The workflow will not commit, push, or create PRs unless you explicitly ask, e.g.:
@@ -125,8 +115,6 @@ The `ticket-workflow` and `team-ticket` skills are intentionally biased toward P
 - assumes Java/Gradle/Spotless conventions when applicable
 - delegates project-specific ticket creation to any installed per-project ticket-creation skill
 
-Use `obsidian-ticket-team` when the work item is an Obsidian Markdown ticket note instead of a Jira/GitHub-style ticket key.
-
 ### Troubleshooting
 
 If pi does not show the new commands or skill:
@@ -145,27 +133,11 @@ ls ~/.pi/agent/agents/ticket-planner.md
 ls ~/.pi/agent/skills/ticket-workflow/SKILL.md
 ```
 
-### Obsidian ticket dashboard
-
-The `obsidian-tickets` extension is installed from `pi/extensions/obsidian-tickets/index.ts`. It keeps ticket frontmatter as the source of truth and regenerates `00 Maps/Agentic Tasks.md` with Dataview sections for status, priority, project/epic, and recently updated tickets. A plain Markdown fallback is included in the generated dashboard for vaults without Dataview enabled.
-
-Recommended setup:
-
-1. Enable the Obsidian Dataview community plugin.
-2. Configure the vault path with `OBSIDIAN_TICKETS_VAULT` if your vault is not at the default `~/Documents/notes`.
-3. Optionally configure `OBSIDIAN_TICKETS_DIR`, `OBSIDIAN_TICKETS_SCAN_DIRS`, and `OBSIDIAN_TICKETS_DASHBOARD` before launching pi.
-4. Run `/tickets-rebuild --dry-run`, then `/tickets-rebuild` to backfill existing `type: ticket` notes and untyped legacy notes in the configured ticket folders.
-
-Kanban plugin sync is deferred; use the generated Dataview dashboard as the canonical board view for now.
-
-When tickets are created in folders outside `OBSIDIAN_TICKETS_SCAN_DIRS`, the extension records those additional scan roots in the generated dashboard frontmatter (`ticket-scan-dirs`) so they remain tracked after `/reload` or a pi restart.
-
 If the `team_create` tool is unavailable, verify the `pi-team-tmux` package and team skills:
 
 ```sh
 pi list
 ls ~/.pi/agent/skills/team-ticket/SKILL.md
-ls ~/.pi/agent/skills/obsidian-ticket-team/SKILL.md
 ```
 
 If the package is missing, run the dotfiles installer or install it manually:

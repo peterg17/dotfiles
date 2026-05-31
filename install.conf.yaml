@@ -12,10 +12,8 @@
     - ~/.pi/agent/prompts
     - ~/.pi/agent/extensions
     - ~/.pi/agent/extensions/subagent
-    - ~/.pi/agent/extensions/obsidian-tickets
     - ~/.pi/agent/skills/jira-ticket-workflow
     - ~/.pi/agent/skills/jira-team-ticket
-    - ~/.pi/agent/skills/obsidian-ticket-team
 
 - clean: ['~/.claude/skills']
 
@@ -31,25 +29,13 @@
 
     ~/.claude/skills/parallel-jira-tickets: claude/skills/parallel-jira-tickets
     ~/.claude/skills/single-jira-ticket-team: claude/skills/single-jira-ticket-team
-    ~/.claude/skills/obsidian-ticket-claude-team: claude/skills/obsidian-ticket-claude-team
-    ~/.claude/skills/obsidian-ticket-create: claude/skills/obsidian-ticket-create
-    ~/.claude/skills/obsidian-ticket-list: claude/skills/obsidian-ticket-list
-    ~/.claude/skills/obsidian-ticket-update: claude/skills/obsidian-ticket-update
-    ~/.claude/skills/obsidian-ticket-rebuild: claude/skills/obsidian-ticket-rebuild
-    ~/.claude/skills/obsidian-ticket-kanban-rebuild: claude/skills/obsidian-ticket-kanban-rebuild
     ~/.claude/skills/obsidian-inbox-cleanup: agents/skills/obsidian-inbox-cleanup
     ~/.agents/skills/obsidian-inbox-cleanup: agents/skills/obsidian-inbox-cleanup
     ~/.pi/agent/skills/jira-ticket-workflow/SKILL.md: pi/skills/jira-ticket-workflow/SKILL.md
     ~/.pi/agent/skills/jira-team-ticket/SKILL.md: pi/skills/jira-team-ticket/SKILL.md
-    ~/.pi/agent/skills/obsidian-ticket-team/SKILL.md:
-      path: pi/skills/obsidian-ticket-team/SKILL.md
-      force: true
 
     ~/.pi/agent/extensions/subagent/index.ts: pi/extensions/subagent/index.ts
     ~/.pi/agent/extensions/subagent/agents.ts: pi/extensions/subagent/agents.ts
-    ~/.pi/agent/extensions/obsidian-tickets/index.ts:
-      path: pi/extensions/obsidian-tickets/index.ts
-      force: true
 
     ~/.pi/agent/agents/ticket-jira-analyst.md: pi/agents/ticket-jira-analyst.md
     ~/.pi/agent/agents/ticket-scout.md: pi/agents/ticket-scout.md
