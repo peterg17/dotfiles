@@ -199,8 +199,7 @@ Pi settings intentionally do not import `~/.claude/skills`; any shared skill sho
 
 Currently shipped:
 
-- Shared:
-  - **`obsidian-inbox-cleanup`** — processes the Obsidian vault `Index.md` capture inbox, files links/ideas into notes, updates MOCs, and verifies unresolved links.
+- Shared: none.
 - Claude-only:
   - **`parallel-jira-tickets`** — spawn a Claude team to tackle multiple Jira tickets in parallel (one implementer per ticket in its own worktree, plus shared reviewer + tester, plus an hourly PR-comment polling cron).
   - **`single-jira-ticket-team`** — single-ticket counterpart to `parallel-jira-tickets`. Spawns a backgrounded team (one implementer in a worktree + shared reviewer + tester + PR-comment cron) for one non-trivial Jira ticket while the user keeps working in the main session.
@@ -212,25 +211,13 @@ To add a portable shared skill, put it under `agents/skills/<name>/SKILL.md` and
 
 ## Obsidian daily inbox cleanup
 
-This repo includes a launchd job for the notes vault at `/Users/peterg17/Documents/notes`:
+The Obsidian inbox cleanup workflow is intentionally **vault-local**, not dotfiles-managed, because it depends on the private notes vault layout and `AGENTS.md` rules.
 
-- Script: `pi/scripts/process-index.sh`
-- LaunchAgent: `pi/launchd/com.peterg17.obsidian-index-cleanup.plist`
-- Schedule: daily at 8:30 PM local time
-- Logs: `/Users/peterg17/Documents/notes/.pi/logs/index-cleanup.{out,err}.log`
+Source of truth:
 
-Enable on macOS:
+- Skill: `~/Documents/notes/.pi/skills/obsidian-inbox-cleanup/SKILL.md`
+- Runner: `~/Documents/notes/.pi/scripts/process-index.sh`
+- LaunchAgent template: `~/Documents/notes/.pi/launchd/com.peterg17.obsidian-index-cleanup.plist`
+- Setup docs: `~/Documents/notes/.pi/README.md`
 
-```sh
-mkdir -p ~/Library/LaunchAgents
-cp pi/launchd/com.peterg17.obsidian-index-cleanup.plist ~/Library/LaunchAgents/
-launchctl unload ~/Library/LaunchAgents/com.peterg17.obsidian-index-cleanup.plist 2>/dev/null || true
-launchctl load ~/Library/LaunchAgents/com.peterg17.obsidian-index-cleanup.plist
-launchctl list | grep com.peterg17.obsidian-index-cleanup
-```
-
-Run manually:
-
-```sh
-/Users/peterg17/Documents/notes/.pi/scripts/process-index.sh
-```
+Do not symlink this skill into `~/.agents/skills`, `~/.claude/skills`, or `~/.pi/agent/skills`; doing so creates duplicate skill discovery/collision warnings. Install or refresh the background job from the notes vault README instead.
